@@ -1,0 +1,21 @@
+{
+  "name": "simple-lit-component",
+  "version": "1.0.0",
+  "description": "Simple Lit web component",
+  "main": "dist/hello-component.js",
+  "type": "module",
+  "scripts": {
+    "build": "rollup -c",
+    "dev": "rollup -c -w",
+    "serve": "python3 -m http.server 8000"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "lit": "^3.1.0"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.9.0"
+  }
+}
