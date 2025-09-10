@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Component Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #1a1a1a;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        .dashboard-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-height: 600px;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .control-button {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .control-button:hover {
+            background: #f0f0f0;
+        }
+        
+        .control-button.active {
+            background: #2196f3;
+            color: white;
+            border-color: #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="demo-header">
+            <h1 class="demo-title">Dashboard Component Demo</h1>
+            <p class="demo-subtitle">
+                Interactive dashboard built with Lit framework featuring metric, table, and chart widgets
+            </p>
+        </div>
+        
+        <div class="dashboard-wrapper">
+            <div class="controls">
+                <button class="control-button active" onclick="loadSampleDashboard()">
+                    Sample Dashboard
+                </button>
+                <button class="control-button" onclick="loadMinimalDashboard()">
+                    Minimal Dashboard
+                </button>
+                <button class="control-button" onclick="loadErrorDashboard()">
+                    Error Demo
+                </button>
+            </div>
+            
+            <dashboard-component id="demo-dashboard"></dashboard-component>
+        </div>
+    </div>
+
+    <script type="module" src="dist/dashboard-component.js"></script>
+    <script>
+        // Sample dashboard configuration
+        const sampleDashboard = {
+            id: "demo-dashboard-1",
+            name: "Sales Performance Dashboard",
+            description: "Comprehensive view of sales metrics, performance data, and key indicators",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "modern",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#2196f3",
+                secondaryColor: "#4caf50",
+                accentColor: "#ff9800",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 8,
+                spacing: 16
+            },
+            widgets: [
+                {
+                    id: "revenue-metric",
+                    title: "Total Revenue",
+                    position: { x: 0, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Total Revenue",
+                            value: 125000,
+                            format: "currency",
+                            prefix: "$",
+                            trend: {
+                                value: 12.5,
+                                direction: "up",
+                                color: "#4caf50"
+                            },
+                            target: 150000,
+                            thresholds: [
+                                { value: 50000, color: "#f44336", label: "Low" },
+                                { value: 100000, color: "#ff9800", label: "Medium" },
+                                { value: 150000, color: "#4caf50", label: "High" }
+                            ]
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "conversion-metric",
+                    title: "Conversion Rate",
+                    position: { x: 3, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Conversion Rate",
+                            value: 0.034,
+                            format: "%",
+                            suffix: "%",
+                            trend: {
+                                value: 2.1,
+                                direction: "up",
+                                color: "#4caf50"
+                            },
+                            target: 0.05
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "customers-metric",
+                    title: "Active Customers",
+                    position: { x: 6, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Active Customers",
+                            value: 1247,
+                            format: ",",
+                            trend: {
+                                value: 8.3,
+                                direction: "up",
+                                color: "#4caf50"
+                            }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "orders-metric",
+                    title: "Orders Today",
+                    position: { x: 9, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Orders Today",
+                            value: 89,
+                            trend: {
+                                value: 5.2,
+                                direction: "down",
+                                color: "#f44336"
+                            }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "sales-chart",
+                    title: "Monthly Sales Trend",
+                    position: { x: 0, y: 2, width: 8, height: 3 },
+                    config: {
+                        type: "chart",
+                        chartId: "monthly-sales"
+                    },
+                    visible: true
+                },
+                {
+                    id: "top-products",
+                    title: "Top Products",
+                    position: { x: 8, y: 2, width: 4, height: 3 },
+                    config: {
+                        type: "table",
+                        config: {
+                            columns: [
+                                { key: "product", title: "Product", align: "left", sortable: true },
+                                { key: "sales", title: "Sales", align: "right", sortable: true, format: "currency" },
+                                { key: "growth", title: "Growth", align: "right", sortable: true, format: "%" }
+                            ],
+                            pagination: {
+                                enabled: true,
+                                pageSize: 5
+                            },
+                            striped: true,
+                            hoverable: true
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "recent-orders",
+                    title: "Recent Orders",
+                    position: { x: 0, y: 5, width: 12, height: 3 },
+                    config: {
+                        type: "table",
+                        config: {
+                            columns: [
+                                { key: "orderId", title: "Order ID", align: "left", sortable: true },
+                                { key: "customer", title: "Customer", align: "left", sortable: true },
+                                { key: "amount", title: "Amount", align: "right", sortable: true, format: "currency" },
+                                { key: "status", title: "Status", align: "center", sortable: true },
+                                { key: "date", title: "Date", align: "left", sortable: true }
+                            ],
+                            pagination: {
+                                enabled: true,
+                                pageSize: 8
+                            },
+                            striped: true,
+                            bordered: true,
+                            hoverable: true
+                        }
+                    },
+                    visible: true
+                }
+            ],
+            tags: ["sales", "performance", "demo"],
+            sharing: { isPublic: false, allowedUsers: [] },
+            audit: { 
+                createdAt: new Date().toISOString(),
+                createdBy: "demo-user",
+                updatedAt: new Date().toISOString(),
+                updatedBy: "demo-user"
+            }
+        };
+
+        // Sample data for the dashboard
+        const sampleData = {
+            "revenue-metric": {
+                value: 125000,
+                trend: { value: 12.5, direction: "up" },
+                target: 150000
+            },
+            "conversion-metric": {
+                value: 0.034,
+                trend: { value: 2.1, direction: "up" }
+            },
+            "customers-metric": {
+                value: 1247,
+                trend: { value: 8.3, direction: "up" }
+            },
+            "orders-metric": {
+                value: 89,
+                trend: { value: 5.2, direction: "down" }
+            },
+            "sales-chart": {
+                type: "line",
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                datasets: [
+                    {
+                        label: "Sales",
+                        data: [65000, 78000, 82000, 95000, 110000, 125000],
+                        backgroundColor: "#2196f3",
+                        borderColor: "#1976d2"
+                    },
+                    {
+                        label: "Target",
+                        data: [70000, 75000, 80000, 90000, 105000, 120000],
+                        backgroundColor: "#4caf50",
+                        borderColor: "#388e3c"
+                    }
+                ]
+            },
+            "top-products": {
+                rows: [
+                    { product: "Premium Widget", sales: 45000, growth: 0.15 },
+                    { product: "Standard Widget", sales: 32000, growth: 0.08 },
+                    { product: "Basic Widget", sales: 28000, growth: -0.02 },
+                    { product: "Deluxe Widget", sales: 20000, growth: 0.25 },
+                    { product: "Mini Widget", sales: 15000, growth: 0.12 },
+                    { product: "Mega Widget", sales: 12000, growth: 0.18 },
+                    { product: "Ultra Widget", sales: 8000, growth: 0.05 }
+                ]
+            },
+            "recent-orders": {
+                rows: [
+                    { orderId: "ORD-001", customer: "John Smith", amount: 1250, status: "Completed", date: "2024-01-15" },
+                    { orderId: "ORD-002", customer: "Sarah Johnson", amount: 890, status: "Processing", date: "2024-01-15" },
+                    { orderId: "ORD-003", customer: "Mike Wilson", amount: 2100, status: "Shipped", date: "2024-01-14" },
+                    { orderId: "ORD-004", customer: "Emily Davis", amount: 750, status: "Completed", date: "2024-01-14" },
+                    { orderId: "ORD-005", customer: "Chris Brown", amount: 1800, status: "Processing", date: "2024-01-13" },
+                    { orderId: "ORD-006", customer: "Lisa Anderson", amount: 950, status: "Shipped", date: "2024-01-13" },
+                    { orderId: "ORD-007", customer: "David Miller", amount: 1400, status: "Completed", date: "2024-01-12" },
+                    { orderId: "ORD-008", customer: "Jennifer Taylor", amount: 680, status: "Processing", date: "2024-01-12" },
+                    { orderId: "ORD-009", customer: "Robert Garcia", amount: 2250, status: "Shipped", date: "2024-01-11" },
+                    { orderId: "ORD-010", customer: "Amanda White", amount: 1100, status: "Completed", date: "2024-01-11" }
+                ]
+            }
+        };
+
+        // Minimal dashboard for testing
+        const minimalDashboard = {
+            id: "minimal-dashboard",
+            name: "Minimal Dashboard",
+            description: "Simple dashboard with basic widgets",
+            layout: { type: "grid", columns: 6, rowHeight: 120 },
+            widgets: [
+                {
+                    id: "simple-metric",
+                    title: "Simple Metric",
+                    position: { x: 0, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: { title: "Users", value: 42 }
+                    },
+                    visible: true
+                },
+                {
+                    id: "simple-table",
+                    title: "Simple Table",
+                    position: { x: 3, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "table",
+                        config: {
+                            columns: [
+                                { key: "name", title: "Name", align: "left" },
+                                { key: "value", title: "Value", align: "right" }
+                            ],
+                            pagination: { enabled: false }
+                        }
+                    },
+                    visible: true
+                }
+            ],
+            sharing: { isPublic: true, allowedUsers: [] },
+            audit: { 
+                createdAt: new Date().toISOString(),
+                createdBy: "demo-user",
+                updatedAt: new Date().toISOString(),
+                updatedBy: "demo-user"
+            }
+        };
+
+        const minimalData = {
+            "simple-metric": { value: 42 },
+            "simple-table": {
+                rows: [
+                    { name: "Item A", value: 100 },
+                    { name: "Item B", value: 200 },
+                    { name: "Item C", value: 150 }
+                ]
+            }
+        };
+
+        // Functions to load different dashboard configurations
+        function loadSampleDashboard() {
+            updateActiveButton(0);
+            const dashboard = document.getElementById('demo-dashboard');
+            dashboard.dashboard = sampleDashboard;
+            dashboard.data = sampleData;
+        }
+
+        function loadMinimalDashboard() {
+            updateActiveButton(1);
+            const dashboard = document.getElementById('demo-dashboard');
+            dashboard.dashboard = minimalDashboard;
+            dashboard.data = minimalData;
+        }
+
+        function loadErrorDashboard() {
+            updateActiveButton(2);
+            const dashboard = document.getElementById('demo-dashboard');
+            dashboard.dashboard = sampleDashboard;
+            dashboard.data = {}; // Empty data to trigger errors
+        }
+
+        function updateActiveButton(activeIndex) {
+            const buttons = document.querySelectorAll('.control-button');
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        // Load the sample dashboard by default
+        window.addEventListener('load', () => {
+            loadSampleDashboard();
+        });
+    </script>
+</body>
+</html>
