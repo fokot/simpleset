@@ -1,6 +1,8 @@
 import { LitElement, html, css } from 'lit';
-import { property } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { WidgetConfig } from '../types/dashboard-types.js';
+import '../polyfills/process.js';
+import * as echarts from 'echarts';
 
 export interface ChartData {
   labels: string[];
@@ -10,7 +12,8 @@ export interface ChartData {
     backgroundColor?: string;
     borderColor?: string;
   }[];
-  type?: 'line' | 'bar' | 'pie' | 'doughnut' | 'area';
+  type?: 'line' | 'bar' | 'pie' | 'doughnut' | 'area' | 'scatter' | 'radar';
+  options?: any; // Additional ECharts options
 }
 
 export class ChartWidget extends LitElement {
@@ -28,6 +31,17 @@ export class ChartWidget extends LitElement {
       padding: 16px;
     }
 
+    .chart-wrapper {
+      flex: 1;
+      min-height: 200px;
+      position: relative;
+    }
+
+    .chart-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
     .chart-placeholder {
       flex: 1;
       display: flex;
@@ -38,6 +52,21 @@ export class ChartWidget extends LitElement {
       border-radius: 8px;
       background: var(--chart-placeholder-bg, #f9f9f9);
       min-height: 200px;
+    }
+
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid var(--primary-color, #2196f3);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .chart-icon {
@@ -137,6 +166,93 @@ export class ChartWidget extends LitElement {
   @property({ type: Object })
   data!: ChartData;
 
+  @state()
+  private _chartInstance?: echarts.ECharts;
+
+  @state()
+  private _isLoading = false;
+
+  @state()
+  private _error?: string;
+
+  connectedCallback() {
+    super.connectedCallback();
+    this._setupResizeObserver();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this._disposeChart();
+  }
+
+  updated(changedProperties: Map<string, any>) {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('data') || changedProperties.has('config')) {
+      this._renderChart();
+    }
+  }
+
+  private _setupResizeObserver() {
+    if (typeof ResizeObserver !== 'undefined') {
+      const resizeObserver = new ResizeObserver(() => {
+        if (this._chartInstance) {
+          this._chartInstance.resize();
+        }
+      });
+
+      this.updateComplete.then(() => {
+        const chartElement = this.shadowRoot?.querySelector('.chart-canvas');
+        if (chartElement) {
+          resizeObserver.observe(chartElement);
+        }
+      });
+    }
+  }
+
+  private _disposeChart() {
+    if (this._chartInstance) {
+      this._chartInstance.dispose();
+      this._chartInstance = undefined;
+    }
+  }
+
+  private async _renderChart() {
+    if (!this.data || !this.config) {
+      this._error = 'Missing chart data or configuration';
+      return;
+    }
+
+    this._isLoading = true;
+    this._error = undefined;
+
+    try {
+      await this.updateComplete;
+      const chartElement = this.shadowRoot?.querySelector('.chart-canvas') as HTMLElement;
+
+      if (!chartElement) {
+        throw new Error('Chart container not found');
+      }
+
+      // Dispose existing chart
+      this._disposeChart();
+
+      // Create new chart instance
+      this._chartInstance = echarts.init(chartElement);
+
+      // Generate chart options based on data and type
+      const options = this._generateChartOptions();
+
+      // Set chart options
+      this._chartInstance.setOption(options);
+
+      this._isLoading = false;
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : 'Failed to render chart';
+      this._isLoading = false;
+    }
+  }
+
   private _getChartIcon(type?: string): string {
     switch (type) {
       case 'line': return '📈';
@@ -164,12 +280,214 @@ export class ChartWidget extends LitElement {
       '#2196F3', '#4CAF50', '#FF9800', '#F44336', '#9C27B0',
       '#00BCD4', '#FFEB3B', '#795548', '#607D8B', '#E91E63'
     ];
-    
+
     const result = [];
     for (let i = 0; i < count; i++) {
       result.push(colors[i % colors.length]);
     }
     return result;
+  }
+
+  private _generateChartOptions(): any {
+    const chartType = this.data.type || 'bar';
+    const colors = this._generateColors(this.data.datasets?.length || 1);
+
+    // Base options
+    const baseOptions = {
+      color: colors,
+      tooltip: {
+        trigger: 'axis',
+        axisPointer: {
+          type: 'shadow'
+        }
+      },
+      legend: {
+        data: this.data.datasets?.map(d => d.label) || [],
+        top: 10
+      },
+      grid: {
+        left: '3%',
+        right: '4%',
+        bottom: '3%',
+        containLabel: true
+      },
+      ...this.data.options // Allow custom options override
+    };
+
+    switch (chartType) {
+      case 'line':
+        return this._generateLineChartOptions(baseOptions);
+      case 'bar':
+        return this._generateBarChartOptions(baseOptions);
+      case 'pie':
+      case 'doughnut':
+        return this._generatePieChartOptions(baseOptions, chartType === 'doughnut');
+      case 'area':
+        return this._generateAreaChartOptions(baseOptions);
+      case 'scatter':
+        return this._generateScatterChartOptions(baseOptions);
+      case 'radar':
+        return this._generateRadarChartOptions(baseOptions);
+      default:
+        return this._generateBarChartOptions(baseOptions);
+    }
+  }
+
+  private _generateLineChartOptions(baseOptions: any): any {
+    return {
+      ...baseOptions,
+      xAxis: {
+        type: 'category',
+        data: this.data.labels,
+        boundaryGap: false
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: this.data.datasets?.map((dataset, index) => ({
+        name: dataset.label,
+        type: 'line',
+        data: dataset.data,
+        smooth: true,
+        lineStyle: {
+          color: dataset.borderColor || baseOptions.color[index]
+        },
+        areaStyle: null
+      })) || []
+    };
+  }
+
+  private _generateBarChartOptions(baseOptions: any): any {
+    return {
+      ...baseOptions,
+      xAxis: {
+        type: 'category',
+        data: this.data.labels
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: this.data.datasets?.map((dataset, index) => ({
+        name: dataset.label,
+        type: 'bar',
+        data: dataset.data,
+        itemStyle: {
+          color: dataset.backgroundColor || baseOptions.color[index]
+        }
+      })) || []
+    };
+  }
+
+  private _generateAreaChartOptions(baseOptions: any): any {
+    return {
+      ...baseOptions,
+      xAxis: {
+        type: 'category',
+        data: this.data.labels,
+        boundaryGap: false
+      },
+      yAxis: {
+        type: 'value'
+      },
+      series: this.data.datasets?.map((dataset, index) => ({
+        name: dataset.label,
+        type: 'line',
+        data: dataset.data,
+        smooth: true,
+        areaStyle: {
+          color: dataset.backgroundColor || baseOptions.color[index]
+        },
+        lineStyle: {
+          color: dataset.borderColor || baseOptions.color[index]
+        }
+      })) || []
+    };
+  }
+
+  private _generatePieChartOptions(baseOptions: any, isDoughnut: boolean = false): any {
+    const dataset = this.data.datasets?.[0];
+    if (!dataset) return baseOptions;
+
+    const pieData = this.data.labels.map((label, index) => ({
+      name: label,
+      value: dataset.data[index] || 0
+    }));
+
+    return {
+      ...baseOptions,
+      tooltip: {
+        trigger: 'item',
+        formatter: '{a} <br/>{b}: {c} ({d}%)'
+      },
+      legend: {
+        orient: 'vertical',
+        left: 'left',
+        data: this.data.labels
+      },
+      series: [{
+        name: dataset.label || 'Data',
+        type: 'pie',
+        radius: isDoughnut ? ['40%', '70%'] : '70%',
+        center: ['50%', '60%'],
+        data: pieData,
+        emphasis: {
+          itemStyle: {
+            shadowBlur: 10,
+            shadowOffsetX: 0,
+            shadowColor: 'rgba(0, 0, 0, 0.5)'
+          }
+        }
+      }]
+    };
+  }
+
+  private _generateScatterChartOptions(baseOptions: any): any {
+    return {
+      ...baseOptions,
+      xAxis: {
+        type: 'value',
+        scale: true
+      },
+      yAxis: {
+        type: 'value',
+        scale: true
+      },
+      series: this.data.datasets?.map((dataset, index) => ({
+        name: dataset.label,
+        type: 'scatter',
+        data: dataset.data.map((value, idx) => [idx, value]),
+        itemStyle: {
+          color: dataset.backgroundColor || baseOptions.color[index]
+        }
+      })) || []
+    };
+  }
+
+  private _generateRadarChartOptions(baseOptions: any): any {
+    const maxValue = Math.max(...this.data.datasets?.flatMap(d => d.data) || [0]);
+
+    return {
+      ...baseOptions,
+      radar: {
+        indicator: this.data.labels.map(label => ({
+          name: label,
+          max: maxValue * 1.2
+        }))
+      },
+      series: [{
+        type: 'radar',
+        data: this.data.datasets?.map((dataset, index) => ({
+          name: dataset.label,
+          value: dataset.data,
+          itemStyle: {
+            color: dataset.backgroundColor || baseOptions.color[index]
+          },
+          lineStyle: {
+            color: dataset.borderColor || baseOptions.color[index]
+          }
+        })) || []
+      }]
+    };
   }
 
   render() {
@@ -187,68 +505,38 @@ export class ChartWidget extends LitElement {
       `;
     }
 
-    const chartType = this.data.type || 'bar';
-    const colors = this._generateColors(this.data.datasets?.length || 1);
+    if (this._error) {
+      return html`
+        <div class="chart-container">
+          <div class="chart-placeholder">
+            <div class="chart-icon">⚠️</div>
+            <div class="chart-title">Chart Error</div>
+            <div class="chart-description">
+              ${this._error}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (this._isLoading) {
+      return html`
+        <div class="chart-container">
+          <div class="chart-placeholder">
+            <div class="loading-spinner"></div>
+            <div class="chart-title">Loading Chart...</div>
+            <div class="chart-description">
+              Rendering ${this.data.type || 'bar'} chart
+            </div>
+          </div>
+        </div>
+      `;
+    }
 
     return html`
       <div class="chart-container">
-        <div class="chart-placeholder">
-          <div class="chart-type-badge">${chartType}</div>
-          <div class="chart-icon">${this._getChartIcon(chartType)}</div>
-          <div class="chart-title">Chart Widget</div>
-          <div class="chart-description">
-            ${this._getChartTypeDescription(chartType)}
-          </div>
-
-          ${this.data.labels && this.data.datasets ? html`
-            <div class="chart-data-preview">
-              <div class="data-preview-title">Data Preview</div>
-              
-              <div class="data-preview-item">
-                <span class="data-label">Labels:</span>
-                <span class="data-value">${this.data.labels.length} items</span>
-              </div>
-              
-              <div class="data-preview-item">
-                <span class="data-label">Datasets:</span>
-                <span class="data-value">${this.data.datasets.length}</span>
-              </div>
-              
-              ${this.data.labels.slice(0, 3).map((label, index) => html`
-                <div class="data-preview-item">
-                  <span class="data-label">${label}:</span>
-                  <span class="data-value">
-                    ${this.data.datasets[0]?.data[index] || 'N/A'}
-                  </span>
-                </div>
-              `)}
-              
-              ${this.data.labels.length > 3 ? html`
-                <div class="data-preview-item">
-                  <span class="data-label">...</span>
-                  <span class="data-value">+${this.data.labels.length - 3} more</span>
-                </div>
-              ` : ''}
-
-              ${this.data.datasets.length > 0 ? html`
-                <div class="dataset-legend">
-                  ${this.data.datasets.map((dataset, index) => html`
-                    <div class="legend-item">
-                      <div 
-                        class="legend-color" 
-                        style="background-color: ${dataset.backgroundColor || colors[index]}"
-                      ></div>
-                      <span>${dataset.label}</span>
-                    </div>
-                  `)}
-                </div>
-              ` : ''}
-            </div>
-          ` : html`
-            <div class="chart-description">
-              <em>No chart data available</em>
-            </div>
-          `}
+        <div class="chart-wrapper">
+          <div class="chart-canvas"></div>
         </div>
       </div>
     `;

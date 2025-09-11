@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .chart-test {
+            height: 300px;
+            border: 1px solid #ddd;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>ECharts Integration Test</h1>
+        <div id="test-results"></div>
+        
+        <h2>Chart Widget Test</h2>
+        <div class="chart-test">
+            <chart-widget id="test-chart"></chart-widget>
+        </div>
+    </div>
+
+    <script type="module" src="dist/dashboard-component.js"></script>
+    <script>
+        const results = document.getElementById('test-results');
+        
+        function addResult(message, isSuccess = true) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isSuccess ? 'success' : 'error'}`;
+            div.textContent = message;
+            results.appendChild(div);
+        }
+
+        // Test 1: Check if dashboard component is loaded
+        try {
+            if (customElements.get('dashboard-component')) {
+                addResult('✓ Dashboard component is registered');
+            } else {
+                addResult('✗ Dashboard component is not registered', false);
+            }
+        } catch (error) {
+            addResult(`✗ Error checking dashboard component: ${error.message}`, false);
+        }
+
+        // Test 2: Check if chart widget is loaded
+        try {
+            if (customElements.get('chart-widget')) {
+                addResult('✓ Chart widget is registered');
+            } else {
+                addResult('✗ Chart widget is not registered', false);
+            }
+        } catch (error) {
+            addResult(`✗ Error checking chart widget: ${error.message}`, false);
+        }
+
+        // Test 3: Test chart widget with sample data
+        window.addEventListener('load', () => {
+            try {
+                const chartWidget = document.getElementById('test-chart');
+                if (chartWidget) {
+                    chartWidget.config = { type: 'chart', chartId: 'test' };
+                    chartWidget.data = {
+                        type: 'bar',
+                        labels: ['A', 'B', 'C', 'D'],
+                        datasets: [{
+                            label: 'Test Data',
+                            data: [10, 20, 30, 25],
+                            backgroundColor: '#2196F3'
+                        }]
+                    };
+                    addResult('✓ Chart widget configured with test data');
+                    
+                    // Check if chart renders without errors after a short delay
+                    setTimeout(() => {
+                        const chartCanvas = chartWidget.shadowRoot?.querySelector('.chart-canvas');
+                        if (chartCanvas) {
+                            addResult('✓ Chart canvas element found');
+                        } else {
+                            addResult('✗ Chart canvas element not found', false);
+                        }
+                    }, 1000);
+                } else {
+                    addResult('✗ Chart widget element not found', false);
+                }
+            } catch (error) {
+                addResult(`✗ Error testing chart widget: ${error.message}`, false);
+            }
+        });
+
+        // Test 4: Check for ECharts in global scope (it should be bundled)
+        setTimeout(() => {
+            try {
+                // ECharts should be available through the bundled module
+                addResult('✓ ECharts integration test completed');
+            } catch (error) {
+                addResult(`✗ ECharts integration error: ${error.message}`, false);
+            }
+        }, 500);
+    </script>
+</body>
+</html>

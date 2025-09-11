@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECharts Dashboard Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .demo-container {
+            max-width: 1600px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .demo-title {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 0 0 15px 0;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.2rem;
+            color: #555;
+            margin: 0;
+            font-weight: 400;
+        }
+        
+        .dashboard-wrapper {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+            overflow: hidden;
+            min-height: 700px;
+        }
+        
+        .controls {
+            padding: 25px;
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .control-button {
+            padding: 12px 20px;
+            border: 2px solid transparent;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+        }
+        
+        .control-button.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: transparent;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 12px 24px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .back-link:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .feature-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-info {
+            padding: 20px;
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            margin: 20px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .chart-info h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 1.1rem;
+        }
+
+        .chart-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="index.html" class="back-link">← Back to All Demos</a>
+
+        <div class="demo-header">
+            <h1 class="demo-title">ECharts Dashboard Demo</h1>
+            <p class="demo-subtitle">
+                Interactive dashboards powered by Apache ECharts with real-time rendering
+                <span class="feature-badge">New</span>
+            </p>
+        </div>
+        
+        <div class="dashboard-wrapper">
+            <div class="controls">
+                <button class="control-button active" onclick="loadAnalyticsDashboard()">
+                    📊 Analytics Dashboard
+                </button>
+                <button class="control-button" onclick="loadSalesDashboard()">
+                    💰 Sales Performance
+                </button>
+                <button class="control-button" onclick="loadOperationsDashboard()">
+                    ⚙️ Operations Monitor
+                </button>
+                <button class="control-button" onclick="loadFinancialDashboard()">
+                    📈 Financial Overview
+                </button>
+            </div>
+            
+            <div class="chart-info">
+                <h3>🚀 Enhanced with Apache ECharts</h3>
+                <p>This dashboard showcases real interactive charts powered by ECharts, featuring smooth animations, responsive design, and rich data visualizations including line charts, bar charts, pie charts, area charts, scatter plots, and radar charts.</p>
+            </div>
+            
+            <dashboard-component id="echarts-dashboard"></dashboard-component>
+        </div>
+    </div>
+
+    <script>
+        // Process polyfill fallback - ensure process is available before loading modules
+        if (typeof globalThis !== 'undefined' && !globalThis.process) {
+            globalThis.process = {
+                env: { NODE_ENV: 'production' },
+                version: '',
+                versions: { node: '' },
+                platform: 'browser',
+                nextTick: function(callback) { setTimeout(callback, 0); },
+                cwd: function() { return '/'; },
+                hrtime: function(previousTimestamp) {
+                    const now = performance.now();
+                    const seconds = Math.floor(now / 1000);
+                    const nanoseconds = Math.floor((now % 1000) * 1000000);
+                    if (previousTimestamp) {
+                        const [prevSeconds, prevNanoseconds] = previousTimestamp;
+                        return [seconds - prevSeconds, nanoseconds - prevNanoseconds];
+                    }
+                    return [seconds, nanoseconds];
+                }
+            };
+        }
+        if (typeof window !== 'undefined' && !window.process) {
+            window.process = globalThis.process;
+        }
+    </script>
+    <script type="module" src="dist/dashboard-component.js"></script>
+    <script>
+        // Analytics Dashboard Configuration
+        const analyticsDashboard = {
+            id: "analytics-dashboard",
+            name: "Website Analytics Dashboard",
+            description: "Comprehensive analytics with ECharts visualizations",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "analytics",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#667eea",
+                secondaryColor: "#764ba2",
+                accentColor: "#4CAF50",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 12,
+                spacing: 20
+            },
+            widgets: [
+                {
+                    id: "visitors-metric",
+                    title: "Total Visitors",
+                    position: { x: 0, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Total Visitors",
+                            value: 45678,
+                            format: ",",
+                            trend: { value: 15.3, direction: "up", color: "#4CAF50" },
+                            target: 50000
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "bounce-rate-metric",
+                    title: "Bounce Rate",
+                    position: { x: 3, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Bounce Rate",
+                            value: 0.342,
+                            format: "%",
+                            suffix: "%",
+                            trend: { value: 2.1, direction: "down", color: "#4CAF50" }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "avg-session-metric",
+                    title: "Avg Session Duration",
+                    position: { x: 6, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Avg Session",
+                            value: "3m 42s",
+                            trend: { value: 8.7, direction: "up", color: "#4CAF50" }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "conversion-metric",
+                    title: "Conversion Rate",
+                    position: { x: 9, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Conversion Rate",
+                            value: 0.0287,
+                            format: "%",
+                            suffix: "%",
+                            trend: { value: 12.4, direction: "up", color: "#4CAF50" }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "traffic-trend-chart",
+                    title: "Traffic Trend (Last 30 Days)",
+                    position: { x: 0, y: 2, width: 8, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "traffic-trend"
+                    },
+                    visible: true
+                },
+                {
+                    id: "device-breakdown-chart",
+                    title: "Device Breakdown",
+                    position: { x: 8, y: 2, width: 4, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "device-breakdown"
+                    },
+                    visible: true
+                }
+            ]
+        };
+
+        // Analytics Dashboard Data
+        const analyticsData = {
+            "visitors-metric": {
+                value: 45678,
+                trend: { value: 15.3, direction: "up" },
+                target: 50000
+            },
+            "bounce-rate-metric": {
+                value: 0.342,
+                trend: { value: 2.1, direction: "down" }
+            },
+            "avg-session-metric": {
+                value: "3m 42s",
+                trend: { value: 8.7, direction: "up" }
+            },
+            "conversion-metric": {
+                value: 0.0287,
+                trend: { value: 12.4, direction: "up" }
+            },
+            "traffic-trend-chart": {
+                type: "area",
+                labels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Day 30"],
+                datasets: [
+                    {
+                        label: "Visitors",
+                        data: [1200, 1450, 1380, 1650, 1820, 1950, 2100],
+                        backgroundColor: "rgba(102, 126, 234, 0.3)",
+                        borderColor: "#667eea"
+                    },
+                    {
+                        label: "Page Views",
+                        data: [2400, 2800, 2650, 3100, 3400, 3650, 3900],
+                        backgroundColor: "rgba(118, 75, 162, 0.3)",
+                        borderColor: "#764ba2"
+                    }
+                ]
+            },
+            "device-breakdown-chart": {
+                type: "doughnut",
+                labels: ["Desktop", "Mobile", "Tablet"],
+                datasets: [{
+                    label: "Device Usage",
+                    data: [45.2, 42.8, 12.0],
+                    backgroundColor: ["#667eea", "#764ba2", "#4CAF50"]
+                }]
+            }
+        };
+
+        // Sales Dashboard Configuration
+        const salesDashboard = {
+            id: "sales-dashboard",
+            name: "Sales Performance Dashboard",
+            description: "Real-time sales metrics and performance indicators",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "sales",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#4CAF50",
+                secondaryColor: "#FF9800",
+                accentColor: "#2196F3",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 12,
+                spacing: 20
+            },
+            widgets: [
+                {
+                    id: "revenue-chart",
+                    title: "Monthly Revenue Trend",
+                    position: { x: 0, y: 0, width: 6, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "revenue-trend"
+                    },
+                    visible: true
+                },
+                {
+                    id: "sales-by-region-chart",
+                    title: "Sales by Region",
+                    position: { x: 6, y: 0, width: 6, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "sales-by-region"
+                    },
+                    visible: true
+                },
+                {
+                    id: "product-performance-chart",
+                    title: "Product Performance",
+                    position: { x: 0, y: 4, width: 8, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "product-performance"
+                    },
+                    visible: true
+                },
+                {
+                    id: "sales-funnel-chart",
+                    title: "Sales Funnel",
+                    position: { x: 8, y: 4, width: 4, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "sales-funnel"
+                    },
+                    visible: true
+                }
+            ]
+        };
+
+        // Sales Dashboard Data
+        const salesData = {
+            "revenue-trend": {
+                type: "line",
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+                datasets: [
+                    {
+                        label: "Revenue",
+                        data: [65000, 78000, 82000, 95000, 110000, 125000, 135000, 142000, 158000, 165000, 178000, 195000],
+                        backgroundColor: "#4CAF50",
+                        borderColor: "#388E3C"
+                    },
+                    {
+                        label: "Target",
+                        data: [70000, 75000, 80000, 90000, 105000, 120000, 130000, 140000, 155000, 170000, 180000, 200000],
+                        backgroundColor: "#FF9800",
+                        borderColor: "#F57C00"
+                    }
+                ]
+            },
+            "sales-by-region": {
+                type: "bar",
+                labels: ["North America", "Europe", "Asia Pacific", "Latin America", "Middle East", "Africa"],
+                datasets: [{
+                    label: "Sales ($M)",
+                    data: [45.2, 38.7, 52.1, 18.9, 12.4, 8.7],
+                    backgroundColor: ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#F44336", "#795548"]
+                }]
+            },
+            "product-performance": {
+                type: "bar",
+                labels: ["Product A", "Product B", "Product C", "Product D", "Product E", "Product F"],
+                datasets: [
+                    {
+                        label: "Q3 Sales",
+                        data: [28000, 35000, 42000, 31000, 38000, 25000],
+                        backgroundColor: "#4CAF50"
+                    },
+                    {
+                        label: "Q4 Sales",
+                        data: [32000, 38000, 45000, 35000, 41000, 28000],
+                        backgroundColor: "#2196F3"
+                    }
+                ]
+            },
+            "sales-funnel": {
+                type: "pie",
+                labels: ["Leads", "Qualified", "Proposals", "Negotiations", "Closed Won"],
+                datasets: [{
+                    label: "Sales Funnel",
+                    data: [1000, 650, 420, 280, 180],
+                    backgroundColor: ["#FF9800", "#FFC107", "#4CAF50", "#2196F3", "#9C27B0"]
+                }]
+            }
+        };
+
+        // Operations Dashboard Configuration
+        const operationsDashboard = {
+            id: "operations-dashboard",
+            name: "Operations Monitor",
+            description: "System performance and operational metrics",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "operations",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#FF5722",
+                secondaryColor: "#607D8B",
+                accentColor: "#00BCD4",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 12,
+                spacing: 20
+            },
+            widgets: [
+                {
+                    id: "system-performance-chart",
+                    title: "System Performance Radar",
+                    position: { x: 0, y: 0, width: 6, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "system-performance"
+                    },
+                    visible: true
+                },
+                {
+                    id: "server-load-chart",
+                    title: "Server Load Over Time",
+                    position: { x: 6, y: 0, width: 6, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "server-load"
+                    },
+                    visible: true
+                },
+                {
+                    id: "error-distribution-chart",
+                    title: "Error Distribution",
+                    position: { x: 0, y: 4, width: 4, height: 3 },
+                    config: {
+                        type: "chart",
+                        chartId: "error-distribution"
+                    },
+                    visible: true
+                },
+                {
+                    id: "response-time-chart",
+                    title: "Response Time Scatter",
+                    position: { x: 4, y: 4, width: 8, height: 3 },
+                    config: {
+                        type: "chart",
+                        chartId: "response-time"
+                    },
+                    visible: true
+                }
+            ]
+        };
+
+        // Operations Dashboard Data
+        const operationsData = {
+            "system-performance": {
+                type: "radar",
+                labels: ["CPU Usage", "Memory", "Disk I/O", "Network", "Database", "Cache Hit Rate"],
+                datasets: [
+                    {
+                        label: "Current",
+                        data: [75, 68, 82, 45, 91, 88],
+                        backgroundColor: "rgba(255, 87, 34, 0.3)",
+                        borderColor: "#FF5722"
+                    },
+                    {
+                        label: "Average",
+                        data: [65, 72, 78, 55, 85, 82],
+                        backgroundColor: "rgba(96, 125, 139, 0.3)",
+                        borderColor: "#607D8B"
+                    }
+                ]
+            },
+            "server-load": {
+                type: "area",
+                labels: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"],
+                datasets: [
+                    {
+                        label: "Server 1",
+                        data: [45, 38, 65, 78, 85, 72, 58],
+                        backgroundColor: "rgba(255, 87, 34, 0.3)",
+                        borderColor: "#FF5722"
+                    },
+                    {
+                        label: "Server 2",
+                        data: [52, 42, 58, 72, 79, 68, 61],
+                        backgroundColor: "rgba(96, 125, 139, 0.3)",
+                        borderColor: "#607D8B"
+                    }
+                ]
+            },
+            "error-distribution": {
+                type: "doughnut",
+                labels: ["404 Not Found", "500 Server Error", "403 Forbidden", "400 Bad Request", "Other"],
+                datasets: [{
+                    label: "Error Types",
+                    data: [45, 28, 15, 8, 4],
+                    backgroundColor: ["#F44336", "#FF5722", "#FF9800", "#FFC107", "#607D8B"]
+                }]
+            },
+            "response-time": {
+                type: "scatter",
+                labels: ["Response Time vs Load"],
+                datasets: [{
+                    label: "Response Time (ms)",
+                    data: [120, 150, 180, 200, 250, 300, 350, 400, 450, 500, 550, 600],
+                    backgroundColor: "#00BCD4"
+                }]
+            }
+        };
+
+        // Financial Dashboard Configuration
+        const financialDashboard = {
+            id: "financial-dashboard",
+            name: "Financial Overview",
+            description: "Financial metrics and performance indicators",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "financial",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#1976D2",
+                secondaryColor: "#388E3C",
+                accentColor: "#F57C00",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 12,
+                spacing: 20
+            },
+            widgets: [
+                {
+                    id: "profit-loss-chart",
+                    title: "Profit & Loss Statement",
+                    position: { x: 0, y: 0, width: 8, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "profit-loss"
+                    },
+                    visible: true
+                },
+                {
+                    id: "cash-flow-chart",
+                    title: "Cash Flow",
+                    position: { x: 8, y: 0, width: 4, height: 4 },
+                    config: {
+                        type: "chart",
+                        chartId: "cash-flow"
+                    },
+                    visible: true
+                },
+                {
+                    id: "expense-breakdown-chart",
+                    title: "Expense Breakdown",
+                    position: { x: 0, y: 4, width: 6, height: 3 },
+                    config: {
+                        type: "chart",
+                        chartId: "expense-breakdown"
+                    },
+                    visible: true
+                },
+                {
+                    id: "revenue-streams-chart",
+                    title: "Revenue Streams",
+                    position: { x: 6, y: 4, width: 6, height: 3 },
+                    config: {
+                        type: "chart",
+                        chartId: "revenue-streams"
+                    },
+                    visible: true
+                }
+            ]
+        };
+
+        // Financial Dashboard Data
+        const financialData = {
+            "profit-loss": {
+                type: "bar",
+                labels: ["Q1", "Q2", "Q3", "Q4"],
+                datasets: [
+                    {
+                        label: "Revenue",
+                        data: [450000, 520000, 580000, 620000],
+                        backgroundColor: "#388E3C"
+                    },
+                    {
+                        label: "Expenses",
+                        data: [320000, 350000, 380000, 400000],
+                        backgroundColor: "#F44336"
+                    },
+                    {
+                        label: "Net Profit",
+                        data: [130000, 170000, 200000, 220000],
+                        backgroundColor: "#1976D2"
+                    }
+                ]
+            },
+            "cash-flow": {
+                type: "line",
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+                datasets: [{
+                    label: "Cash Flow ($K)",
+                    data: [85, 92, 78, 105, 118, 125],
+                    backgroundColor: "#1976D2",
+                    borderColor: "#0D47A1"
+                }]
+            },
+            "expense-breakdown": {
+                type: "pie",
+                labels: ["Salaries", "Marketing", "Operations", "R&D", "Admin", "Other"],
+                datasets: [{
+                    label: "Expenses",
+                    data: [45, 20, 15, 12, 5, 3],
+                    backgroundColor: ["#1976D2", "#388E3C", "#F57C00", "#7B1FA2", "#D32F2F", "#455A64"]
+                }]
+            },
+            "revenue-streams": {
+                type: "doughnut",
+                labels: ["Product Sales", "Services", "Subscriptions", "Licensing", "Other"],
+                datasets: [{
+                    label: "Revenue Sources",
+                    data: [55, 25, 12, 6, 2],
+                    backgroundColor: ["#1976D2", "#388E3C", "#F57C00", "#7B1FA2", "#D32F2F"]
+                }]
+            }
+        };
+
+        // Functions to load different dashboard configurations
+        function loadAnalyticsDashboard() {
+            updateActiveButton(0);
+            const dashboard = document.getElementById('echarts-dashboard');
+            dashboard.dashboard = analyticsDashboard;
+            dashboard.data = analyticsData;
+        }
+
+        function loadSalesDashboard() {
+            updateActiveButton(1);
+            const dashboard = document.getElementById('echarts-dashboard');
+            dashboard.dashboard = salesDashboard;
+            dashboard.data = salesData;
+        }
+
+        function loadOperationsDashboard() {
+            updateActiveButton(2);
+            const dashboard = document.getElementById('echarts-dashboard');
+            dashboard.dashboard = operationsDashboard;
+            dashboard.data = operationsData;
+        }
+
+        function loadFinancialDashboard() {
+            updateActiveButton(3);
+            const dashboard = document.getElementById('echarts-dashboard');
+            dashboard.dashboard = financialDashboard;
+            dashboard.data = financialData;
+        }
+
+        function updateActiveButton(activeIndex) {
+            const buttons = document.querySelectorAll('.control-button');
+            buttons.forEach((button, index) => {
+                button.classList.toggle('active', index === activeIndex);
+            });
+        }
+
+        // Load the analytics dashboard by default
+        window.addEventListener('load', () => {
+            loadAnalyticsDashboard();
+        });
+    </script>
+</body>
+</html>
