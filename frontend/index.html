@@ -3,100 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hello Component Demo</title>
+    <title>SimpleSet - Component Demos</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
             margin: 0;
-            padding: 20px;
-            background: linear-gradient(45deg, #f0f2f5, #e8ecf0);
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-        }
-        
-        .demo-container {
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        h1 {
-            text-align: center;
             color: #333;
-            margin-bottom: 30px;
         }
-        
-        .info {
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            margin: 0;
+            font-weight: 300;
+        }
+
+        .demos-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .demo-card {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
         }
-        
-        .event-log {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            border-radius: 5px;
-            padding: 10px;
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
+
+        .demo-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
         }
-        
-        .event-log h3 {
-            margin-top: 0;
-            color: #495057;
+
+        .demo-card h2 {
+            color: #333;
+            font-size: 1.5rem;
+            margin: 0 0 15px 0;
+            font-weight: 600;
         }
-        
-        .log-entry {
-            padding: 5px;
-            border-bottom: 1px solid #e9ecef;
-            font-family: monospace;
-            font-size: 0.9rem;
+
+        .demo-card p {
+            color: #666;
+            line-height: 1.6;
+            margin: 0 0 20px 0;
+        }
+
+        .demo-features {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .demo-features li {
+            color: #555;
+            padding: 5px 0;
+            position: relative;
+            padding-left: 20px;
+        }
+
+        .demo-features li:before {
+            content: "✓";
+            color: #4caf50;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+
+        .demo-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-top: 15px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 60px;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        .footer p {
+            margin: 5px 0;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .demos-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 20px 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="demo-container">
-        <h1>Lit Web Component Demo</h1>
-        
-        <div class="info">
-            <h3>Features:</h3>
-            <ul>
-                <li>Built with Lit framework</li>
-                <li>Responsive CSS with hover effects</li>
-                <li>Click interaction with animations</li>
-                <li>Custom event dispatching</li>
-                <li>Dynamic color changes</li>
-                <li>Click counter</li>
-            </ul>
+    <div class="container">
+        <div class="header">
+            <h1>SimpleSet</h1>
+            <p>Interactive Web Component Demos</p>
         </div>
-        
-        <!-- Our custom web component -->
-        <hello-component></hello-component>
-        
-        <div class="event-log">
-            <h3>Event Log:</h3>
-            <div id="log"></div>
+
+        <div class="demos-grid">
+            <a href="hello-demo.html" class="demo-card">
+                <h2>Hello Component Demo</h2>
+                <p>A simple interactive greeting component built with Lit framework featuring click interactions, animations, and custom events.</p>
+                <ul class="demo-features">
+                    <li>Click interaction with animations</li>
+                    <li>Dynamic color changes</li>
+                    <li>Custom event dispatching</li>
+                    <li>Click counter tracking</li>
+                    <li>Responsive hover effects</li>
+                </ul>
+                <span class="demo-badge">Lit Component</span>
+            </a>
+
+            <a href="dashboard-demo.html" class="demo-card">
+                <h2>Dashboard Component Demo</h2>
+                <p>A comprehensive dashboard system with metric widgets, data tables, and interactive charts for data visualization.</p>
+                <ul class="demo-features">
+                    <li>Metric widgets with trends</li>
+                    <li>Interactive data tables</li>
+                    <li>Chart visualization</li>
+                    <li>Responsive grid layout</li>
+                    <li>Theme customization</li>
+                </ul>
+                <span class="demo-badge">Dashboard System</span>
+            </a>
+        </div>
+
+        <div class="footer">
+            <p>Built with Lit Framework</p>
+            <p>Modern Web Components for Interactive UIs</p>
         </div>
     </div>
-
-    <!-- Load the built component -->
-    <script type="module" src="dist/hello-component.js"></script>
-    
-    <script>
-        // Listen for custom events from the component
-        document.addEventListener('hello-clicked', (event) => {
-            const log = document.getElementById('log');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            entry.textContent = `[${new Date().toLocaleTimeString()}] Component clicked! Count: ${event.detail.clickCount}`;
-            log.appendChild(entry);
-            log.scrollTop = log.scrollHeight;
-        });
-        
-        // Add some additional interactivity
-        console.log('Hello Component Demo loaded!');
-    </script>
 </body>
 </html>
