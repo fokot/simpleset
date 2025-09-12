@@ -189,7 +189,20 @@ export class ChartWidget extends LitElement {
     super.updated(changedProperties);
 
     if (changedProperties.has('data') || changedProperties.has('config')) {
-      this._renderChart();
+      // Use requestAnimationFrame to ensure DOM is ready
+      requestAnimationFrame(() => {
+        this._renderChart();
+      });
+    }
+  }
+
+  firstUpdated(changedProperties: Map<string, any>) {
+    super.firstUpdated(changedProperties);
+    // Render chart after first update if we have data
+    if (this.data && this.config) {
+      requestAnimationFrame(() => {
+        this._renderChart();
+      });
     }
   }
 
@@ -227,15 +240,48 @@ export class ChartWidget extends LitElement {
     this._error = undefined;
 
     try {
+      // Ensure component is fully updated
       await this.updateComplete;
+
+      // Wait a bit more to ensure DOM is ready
+      await new Promise(resolve => setTimeout(resolve, 10));
+
       const chartElement = this.shadowRoot?.querySelector('.chart-canvas') as HTMLElement;
 
       if (!chartElement) {
-        throw new Error('Chart container not found');
+        // Try to force a re-render and wait
+        this.requestUpdate();
+        await this.updateComplete;
+        await new Promise(resolve => setTimeout(resolve, 50));
+
+        const retryElement = this.shadowRoot?.querySelector('.chart-canvas') as HTMLElement;
+        if (!retryElement) {
+          throw new Error('Chart container not found after retry');
+        }
+
+        return this._initializeChart(retryElement);
       }
 
+      return this._initializeChart(chartElement);
+
+    } catch (error) {
+      this._error = error instanceof Error ? error.message : 'Failed to render chart';
+      this._isLoading = false;
+      console.error('Chart rendering error:', error);
+    }
+  }
+
+  private _initializeChart(chartElement: HTMLElement) {
+    try {
       // Dispose existing chart
       this._disposeChart();
+
+      // Ensure element has dimensions
+      if (chartElement.offsetWidth === 0 || chartElement.offsetHeight === 0) {
+        chartElement.style.width = '100%';
+        chartElement.style.height = '100%';
+        chartElement.style.minHeight = '200px';
+      }
 
       // Create new chart instance
       this._chartInstance = echarts.init(chartElement);
@@ -248,8 +294,9 @@ export class ChartWidget extends LitElement {
 
       this._isLoading = false;
     } catch (error) {
-      this._error = error instanceof Error ? error.message : 'Failed to render chart';
+      this._error = error instanceof Error ? error.message : 'Failed to initialize chart';
       this._isLoading = false;
+      throw error;
     }
   }
 

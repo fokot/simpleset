@@ -235,7 +235,11 @@ export class DashboardComponent extends LitElement {
   }
 
   private _renderWidget(widget: DashboardWidget) {
-    const widgetData = this.data?.[widget.id];
+    // For chart widgets, use chartId if available, otherwise use widget.id
+    const dataKey = widget.config.type === 'chart' && 'chartId' in widget.config
+      ? widget.config.chartId
+      : widget.id;
+    const widgetData = this.data?.[dataKey];
     const error = this._errors.get(widget.id);
 
     return html`
