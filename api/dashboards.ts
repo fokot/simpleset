@@ -175,7 +175,6 @@ export const MarkdownWidgetConfigSchema = z.object({
 export const WidgetConfigSchema = z.discriminatedUnion('type', [
   z.object({
     type: z.literal('chart'),
-    chartId: IdSchema,
   }),
   z.object({
     type: z.literal('text'),

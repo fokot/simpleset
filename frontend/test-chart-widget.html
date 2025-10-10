@@ -87,7 +87,7 @@
         window.addEventListener('load', () => {
             // Test Bar Chart
             const barChart = document.getElementById('bar-chart');
-            barChart.config = { type: 'chart', chartId: 'test-bar' };
+            barChart.config = { type: 'chart' };
             barChart.data = {
                 type: 'bar',
                 labels: ['Jan', 'Feb', 'Mar', 'Apr'],
@@ -100,7 +100,7 @@
 
             // Test Line Chart
             const lineChart = document.getElementById('line-chart');
-            lineChart.config = { type: 'chart', chartId: 'test-line' };
+            lineChart.config = { type: 'chart' };
             lineChart.data = {
                 type: 'line',
                 labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
@@ -114,7 +114,7 @@
 
             // Test Pie Chart
             const pieChart = document.getElementById('pie-chart');
-            pieChart.config = { type: 'chart', chartId: 'test-pie' };
+            pieChart.config = { type: 'chart' };
             pieChart.data = {
                 type: 'pie',
                 labels: ['Desktop', 'Mobile', 'Tablet'],

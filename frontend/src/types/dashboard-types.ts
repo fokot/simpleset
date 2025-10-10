@@ -108,8 +108,8 @@ export interface MarkdownWidgetConfig {
   linkify?: boolean;
 }
 
-export type WidgetConfig = 
-  | { type: 'chart'; chartId: string }
+export type WidgetConfig =
+  | { type: 'chart' }
   | { type: 'text'; config: TextWidgetConfig }
   | { type: 'image'; config: ImageWidgetConfig }
   | { type: 'iframe'; config: IFrameWidgetConfig }

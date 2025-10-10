@@ -195,12 +195,7 @@ export class DashboardComponent extends LitElement {
     }
 
     // Check if data exists for widget
-    // For chart widgets, use chartId if available, otherwise use widget.id
-    const dataKey = widget.config.type === 'chart' && 'chartId' in widget.config
-      ? widget.config.chartId
-      : widget.id;
-
-    if (!this.data![dataKey]) {
+    if (!this.data![widget.id]) {
       this._errors.set(widget.id, `No data provided for widget: ${widget.title || widget.id}`);
       return;
     }
@@ -223,11 +218,6 @@ export class DashboardComponent extends LitElement {
           this._errors.set(widget.id, `Table widget ${widget.id} is missing columns configuration`);
         }
         break;
-      case 'chart':
-        if (!config.chartId) {
-          this._errors.set(widget.id, `Chart widget ${widget.id} is missing chartId`);
-        }
-        break;
     }
   }
 
@@ -240,11 +230,7 @@ export class DashboardComponent extends LitElement {
   }
 
   private _renderWidget(widget: DashboardWidget) {
-    // For chart widgets, use chartId if available, otherwise use widget.id
-    const dataKey = widget.config.type === 'chart' && 'chartId' in widget.config
-      ? widget.config.chartId
-      : widget.id;
-    const widgetData = this.data?.[dataKey];
+    const widgetData = this.data?.[widget.id];
     const error = this._errors.get(widget.id);
 
     return html`
