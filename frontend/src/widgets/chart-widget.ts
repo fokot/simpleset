@@ -170,9 +170,6 @@ export class ChartWidget extends LitElement {
   private _chartInstance?: echarts.ECharts;
 
   @state()
-  private _isLoading = false;
-
-  @state()
   private _error?: string;
 
   connectedCallback() {
@@ -236,7 +233,6 @@ export class ChartWidget extends LitElement {
       return;
     }
 
-    this._isLoading = true;
     this._error = undefined;
 
     try {
@@ -266,7 +262,6 @@ export class ChartWidget extends LitElement {
 
     } catch (error) {
       this._error = error instanceof Error ? error.message : 'Failed to render chart';
-      this._isLoading = false;
       console.error('Chart rendering error:', error);
     }
   }
@@ -291,11 +286,8 @@ export class ChartWidget extends LitElement {
 
       // Set chart options
       this._chartInstance.setOption(options);
-
-      this._isLoading = false;
     } catch (error) {
       this._error = error instanceof Error ? error.message : 'Failed to initialize chart';
-      this._isLoading = false;
       throw error;
     }
   }
@@ -560,20 +552,6 @@ export class ChartWidget extends LitElement {
             <div class="chart-title">Chart Error</div>
             <div class="chart-description">
               ${this._error}
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    if (this._isLoading) {
-      return html`
-        <div class="chart-container">
-          <div class="chart-placeholder">
-            <div class="loading-spinner"></div>
-            <div class="chart-title">Loading Chart...</div>
-            <div class="chart-description">
-              Rendering ${this.data.type || 'bar'} chart
             </div>
           </div>
         </div>

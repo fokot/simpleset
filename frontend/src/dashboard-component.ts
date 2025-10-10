@@ -195,7 +195,12 @@ export class DashboardComponent extends LitElement {
     }
 
     // Check if data exists for widget
-    if (!this.data![widget.id]) {
+    // For chart widgets, use chartId if available, otherwise use widget.id
+    const dataKey = widget.config.type === 'chart' && 'chartId' in widget.config
+      ? widget.config.chartId
+      : widget.id;
+
+    if (!this.data![dataKey]) {
       this._errors.set(widget.id, `No data provided for widget: ${widget.title || widget.id}`);
       return;
     }
