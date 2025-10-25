@@ -175,14 +175,19 @@ export class ChartWidget extends LitElement {
   private _error?: string;
 
   private _isRendering = false;
+  private _resizeObserver?: ResizeObserver;
+  private _resizeTimeout?: number;
+  private _lastWidth = 0;
+  private _lastHeight = 0;
 
   connectedCallback() {
     super.connectedCallback();
-    this._setupResizeObserver();
+    // this._setupResizeObserver();
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
+    // this._cleanupResizeObserver();
     this._disposeChart();
   }
 
@@ -207,22 +212,48 @@ export class ChartWidget extends LitElement {
     }
   }
 
-  private _setupResizeObserver() {
-    if (typeof ResizeObserver !== 'undefined') {
-      const resizeObserver = new ResizeObserver(() => {
-        if (this._chartInstance) {
-          this._chartInstance.resize();
-        }
-      });
+  // private _setupResizeObserver() {
+  //   if (typeof ResizeObserver !== 'undefined') {
+  //     this._resizeObserver = new ResizeObserver((entries) => {
+  //       // Debounce resize calls to prevent infinite loops
+  //       if (this._resizeTimeout) {
+  //         window.clearTimeout(this._resizeTimeout);
+  //       }
+  //       this._resizeTimeout = window.setTimeout(() => {
+  //         if (this._chartInstance && entries.length > 0) {
+  //           const entry = entries[0];
+  //           const newWidth = entry.contentRect.width;
+  //           const newHeight = entry.contentRect.height;
+  //
+  //           // Only resize if dimensions actually changed
+  //           if (newWidth !== this._lastWidth || newHeight !== this._lastHeight) {
+  //             this._lastWidth = newWidth;
+  //             this._lastHeight = newHeight;
+  //             this._chartInstance.resize();
+  //           }
+  //         }
+  //       }, 100);
+  //     });
+  //
+  //     this.updateComplete.then(() => {
+  //       // Observe the host element instead of the chart canvas
+  //       if (this._resizeObserver) {
+  //         this._resizeObserver.observe(this);
+  //       }
+  //     });
+  //   }
+  // }
 
-      this.updateComplete.then(() => {
-        const chartElement = this.shadowRoot?.querySelector('.chart-canvas');
-        if (chartElement) {
-          resizeObserver.observe(chartElement);
-        }
-      });
-    }
-  }
+  // private _cleanupResizeObserver() {
+  //   if (this._resizeObserver) {
+  //     this._resizeObserver.disconnect();
+  //     this._resizeObserver = undefined;
+  //   }
+  //   if (this._resizeTimeout) {
+  //     window.clearTimeout(this._resizeTimeout);
+  //     this._resizeTimeout = undefined;
+  //   }
+  // }
 
   private _disposeChart() {
     if (this._chartInstance) {
