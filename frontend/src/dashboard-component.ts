@@ -1,4 +1,3 @@
-import './polyfills/process.js';
 import { LitElement, html, css, PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { Dashboard, DashboardWidget } from './types/dashboard-types.js';

@@ -1,7 +1,6 @@
 import { LitElement, html, css } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { WidgetConfig } from '../types/dashboard-types.js';
-import '../polyfills/process.js';
 import * as echarts from 'echarts';
 
 export interface ChartData {
