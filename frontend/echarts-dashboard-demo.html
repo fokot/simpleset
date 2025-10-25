@@ -173,14 +173,17 @@
             <div class="chart-info">
                 <h3>🚀 Enhanced with Apache ECharts</h3>
                 <p>This dashboard showcases real interactive charts powered by ECharts, featuring smooth animations, responsive design, and rich data visualizations including line charts, bar charts, pie charts, area charts, scatter plots, and radar charts.</p>
+                <p id="debug-status" style="color: #667eea; font-weight: bold; margin-top: 10px;">Loading dashboard component...</p>
             </div>
-            
+
             <dashboard-component id="echarts-dashboard"></dashboard-component>
         </div>
     </div>
 
-    <script type="module" src="dist/dashboard-component.js"></script>
-    <script>
+    <script type="module">
+        // Import the dashboard component
+        import './dist/dashboard-component.js';
+
         // Analytics Dashboard Configuration
         const analyticsDashboard = {
             id: "analytics-dashboard",
@@ -307,7 +310,7 @@
                 value: 0.0287,
                 trend: { value: 12.4, direction: "up" }
             },
-            "traffic-trend": {
+            "traffic-trend-chart": {
                 type: "area",
                 labels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Day 30"],
                 datasets: [
@@ -325,7 +328,7 @@
                     }
                 ]
             },
-            "device-breakdown": {
+            "device-breakdown-chart": {
                 type: "doughnut",
                 labels: ["Desktop", "Mobile", "Tablet"],
                 datasets: [{
@@ -401,7 +404,7 @@
 
         // Sales Dashboard Data
         const salesData = {
-            "revenue-trend": {
+            "revenue-chart": {
                 type: "line",
                 labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
                 datasets: [
@@ -419,7 +422,7 @@
                     }
                 ]
             },
-            "sales-by-region": {
+            "sales-by-region-chart": {
                 type: "bar",
                 labels: ["North America", "Europe", "Asia Pacific", "Latin America", "Middle East", "Africa"],
                 datasets: [{
@@ -428,7 +431,7 @@
                     backgroundColor: ["#4CAF50", "#2196F3", "#FF9800", "#9C27B0", "#F44336", "#795548"]
                 }]
             },
-            "product-performance": {
+            "product-performance-chart": {
                 type: "bar",
                 labels: ["Product A", "Product B", "Product C", "Product D", "Product E", "Product F"],
                 datasets: [
@@ -444,7 +447,7 @@
                     }
                 ]
             },
-            "sales-funnel": {
+            "sales-funnel-chart": {
                 type: "pie",
                 labels: ["Leads", "Qualified", "Proposals", "Negotiations", "Closed Won"],
                 datasets: [{
@@ -520,7 +523,7 @@
 
         // Operations Dashboard Data
         const operationsData = {
-            "system-performance": {
+            "system-performance-chart": {
                 type: "radar",
                 labels: ["CPU Usage", "Memory", "Disk I/O", "Network", "Database", "Cache Hit Rate"],
                 datasets: [
@@ -538,7 +541,7 @@
                     }
                 ]
             },
-            "server-load": {
+            "server-load-chart": {
                 type: "area",
                 labels: ["00:00", "04:00", "08:00", "12:00", "16:00", "20:00", "24:00"],
                 datasets: [
@@ -556,7 +559,7 @@
                     }
                 ]
             },
-            "error-distribution": {
+            "error-distribution-chart": {
                 type: "doughnut",
                 labels: ["404 Not Found", "500 Server Error", "403 Forbidden", "400 Bad Request", "Other"],
                 datasets: [{
@@ -565,7 +568,7 @@
                     backgroundColor: ["#F44336", "#FF5722", "#FF9800", "#FFC107", "#607D8B"]
                 }]
             },
-            "response-time": {
+            "response-time-chart": {
                 type: "scatter",
                 labels: ["Response Time vs Load"],
                 datasets: [{
@@ -641,7 +644,7 @@
 
         // Financial Dashboard Data
         const financialData = {
-            "profit-loss": {
+            "profit-loss-chart": {
                 type: "bar",
                 labels: ["Q1", "Q2", "Q3", "Q4"],
                 datasets: [
@@ -662,7 +665,7 @@
                     }
                 ]
             },
-            "cash-flow": {
+            "cash-flow-chart": {
                 type: "line",
                 labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
                 datasets: [{
@@ -672,7 +675,7 @@
                     borderColor: "#0D47A1"
                 }]
             },
-            "expense-breakdown": {
+            "expense-breakdown-chart": {
                 type: "pie",
                 labels: ["Salaries", "Marketing", "Operations", "R&D", "Admin", "Other"],
                 datasets: [{
@@ -681,7 +684,7 @@
                     backgroundColor: ["#1976D2", "#388E3C", "#F57C00", "#7B1FA2", "#D32F2F", "#455A64"]
                 }]
             },
-            "revenue-streams": {
+            "revenue-streams-chart": {
                 type: "doughnut",
                 labels: ["Product Sales", "Services", "Subscriptions", "Licensing", "Other"],
                 datasets: [{
@@ -696,8 +699,13 @@
         function loadAnalyticsDashboard() {
             updateActiveButton(0);
             const dashboard = document.getElementById('echarts-dashboard');
+            console.log('Loading analytics dashboard...');
+            console.log('Dashboard element:', dashboard);
+            console.log('Dashboard config:', analyticsDashboard);
+            console.log('Dashboard data:', analyticsData);
             dashboard.dashboard = analyticsDashboard;
             dashboard.data = analyticsData;
+            console.log('Dashboard loaded!');
         }
 
         function loadSalesDashboard() {
@@ -729,8 +737,16 @@
         }
 
         // Load the analytics dashboard by default
-        window.addEventListener('load', () => {
+        customElements.whenDefined('dashboard-component').then(() => {
+            const debugStatus = document.getElementById('debug-status');
+            debugStatus.textContent = 'Dashboard component loaded! Initializing...';
+            console.log('Dashboard component defined!');
+            console.log('Analytics data keys:', Object.keys(analyticsData));
+            console.log('Analytics widget IDs:', analyticsDashboard.widgets.map(w => w.id));
             loadAnalyticsDashboard();
+            setTimeout(() => {
+                debugStatus.textContent = 'Dashboard initialized! Charts should be visible below.';
+            }, 500);
         });
     </script>
 </body>

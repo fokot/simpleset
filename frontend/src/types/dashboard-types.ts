@@ -60,7 +60,7 @@ export interface FilterWidgetConfig {
   }>;
   defaultValue?: any;
   required?: boolean;
-  targetChartIds?: string[];
+  targetWidgetIds?: string[];
 }
 
 export interface MetricWidgetConfig {

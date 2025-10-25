@@ -255,12 +255,12 @@ export const InteractiveConfigSchema = z.object({
   drillDown: z.object({
     enabled: z.boolean().default(false),
     targetDashboardId: IdSchema.optional(),
-    targetChartId: IdSchema.optional(),
+    targetWidgetId: IdSchema.optional(),
     parameters: z.record(z.string()).default({}),
   }).optional(),
   crossFilter: z.object({
     enabled: z.boolean().default(false),
-    targetChartIds: z.array(IdSchema).default([]),
+    targetWidgetIds: z.array(IdSchema).default([]),
   }).optional(),
   export: z.object({
     enabled: z.boolean().default(true),
@@ -330,7 +330,7 @@ export const ChartListResponseSchema = PaginatedResponseSchema(ChartSchema);
  * Chart data request
  */
 export const ChartDataRequestSchema = z.object({
-  chartId: IdSchema,
+  widgetId: IdSchema,
   parameters: z.record(z.any()).default({}),
   useCache: z.boolean().default(true),
 });

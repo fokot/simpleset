@@ -169,7 +169,12 @@ export class ChartWidget extends LitElement {
   private _chartInstance?: echarts.ECharts;
 
   @state()
+  private _isLoading = false;
+
+  @state()
   private _error?: string;
+
+  private _isRendering = false;
 
   connectedCallback() {
     super.connectedCallback();
@@ -184,7 +189,7 @@ export class ChartWidget extends LitElement {
   updated(changedProperties: Map<string, any>) {
     super.updated(changedProperties);
 
-    if (changedProperties.has('data') || changedProperties.has('config')) {
+    if ((changedProperties.has('data') || changedProperties.has('config')) && !this._isRendering) {
       // Use requestAnimationFrame to ensure DOM is ready
       requestAnimationFrame(() => {
         this._renderChart();
@@ -232,6 +237,11 @@ export class ChartWidget extends LitElement {
       return;
     }
 
+    if (this._isRendering) {
+      return; // Prevent concurrent rendering
+    }
+
+    this._isRendering = true;
     this._error = undefined;
 
     try {
@@ -254,14 +264,16 @@ export class ChartWidget extends LitElement {
           throw new Error('Chart container not found after retry');
         }
 
-        return this._initializeChart(retryElement);
+        this._initializeChart(retryElement);
+      } else {
+        this._initializeChart(chartElement);
       }
-
-      return this._initializeChart(chartElement);
 
     } catch (error) {
       this._error = error instanceof Error ? error.message : 'Failed to render chart';
       console.error('Chart rendering error:', error);
+    } finally {
+      this._isRendering = false;
     }
   }
 

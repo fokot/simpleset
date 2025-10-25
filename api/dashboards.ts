@@ -112,7 +112,7 @@ export const FilterWidgetConfigSchema = z.object({
   })).optional(),
   defaultValue: z.any().optional(),
   required: z.boolean().default(false),
-  targetChartIds: z.array(IdSchema).default([]),
+  targetWidgetIds: z.array(IdSchema).default([]),
 });
 
 /**
