@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { TableWidgetConfig } from '../types/dashboard-types.js';
 
 export interface TableData {
@@ -7,6 +7,7 @@ export interface TableData {
   totalCount?: number;
 }
 
+@customElement('table-widget')
 export class TableWidget extends LitElement {
   static styles = css`
     :host {
@@ -381,5 +382,3 @@ export class TableWidget extends LitElement {
     `;
   }
 }
-
-customElements.define('table-widget', TableWidget);

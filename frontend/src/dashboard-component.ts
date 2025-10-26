@@ -1,5 +1,5 @@
 import { LitElement, html, css, PropertyValues } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { Dashboard, DashboardWidget } from './types/dashboard-types.js';
 import './widgets/index.js';
 
@@ -7,6 +7,7 @@ export interface DashboardData {
   [widgetId: string]: any;
 }
 
+@customElement('dashboard-component')
 export class DashboardComponent extends LitElement {
   static styles = css`
     :host {
@@ -312,5 +313,3 @@ export class DashboardComponent extends LitElement {
     `;
   }
 }
-
-customElements.define('dashboard-component', DashboardComponent);

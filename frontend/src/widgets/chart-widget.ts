@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { customElement, property, state } from 'lit/decorators.js';
 import { WidgetConfig } from '../types/dashboard-types.js';
 import * as echarts from 'echarts';
 
@@ -15,6 +15,7 @@ export interface ChartData {
   options?: any; // Additional ECharts options
 }
 
+@customElement('chart-widget')
 export class ChartWidget extends LitElement {
   static styles = css`
     :host {
@@ -609,5 +610,3 @@ export class ChartWidget extends LitElement {
     `;
   }
 }
-
-customElements.define('chart-widget', ChartWidget);

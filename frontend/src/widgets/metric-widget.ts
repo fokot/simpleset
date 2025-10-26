@@ -1,5 +1,5 @@
 import { LitElement, html, css } from 'lit';
-import { property } from 'lit/decorators.js';
+import { customElement, property } from 'lit/decorators.js';
 import { MetricWidgetConfig } from '../types/dashboard-types.js';
 
 export interface MetricData {
@@ -11,6 +11,7 @@ export interface MetricData {
   target?: number;
 }
 
+@customElement('metric-widget')
 export class MetricWidget extends LitElement {
   static styles = css`
     :host {
@@ -221,5 +222,3 @@ export class MetricWidget extends LitElement {
     `;
   }
 }
-
-customElements.define('metric-widget', MetricWidget);
