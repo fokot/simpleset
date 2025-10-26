@@ -23,6 +23,6 @@ Imagine if [Superset](https://superset.apache.org/) was re-invented with
 
 ## Backend
 
-`/data/<dashboard>/<chart>` - async, load every chart data separately
-`/data-all/<dashboard>` - sync, load data for all charts on dashboard together
-`/data-ws/<dashboard>` - async, websocket for live updates, if you implement your own backend, you can group chart data as you want 
+* `/data/<dashboard>/<chart>` - async, load every chart data separately
+* `/data-all/<dashboard>` - sync, load data for all charts on dashboard together
+* `/data-ws/<dashboard>` - async, websocket for live updates, if you implement your own backend, you can group chart data as you want 
