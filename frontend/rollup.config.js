@@ -3,10 +3,10 @@ import terser from '@rollup/plugin-terser';
 import typescript from '@rollup/plugin-typescript';
 import replace from '@rollup/plugin-replace';
 
-export default {
-  input: 'src/dashboard-component.ts',
+const createConfig = (input, output) => ({
+  input,
   output: {
-    file: 'dist/dashboard-component.js',
+    file: output,
     format: 'es',
     sourcemap: true
   },
@@ -28,4 +28,9 @@ export default {
       }
     })
   ]
-};
+});
+
+export default [
+  createConfig('src/dashboard-component.ts', 'dist/dashboard-component.js'),
+  createConfig('src/dashboard-editor-component.ts', 'dist/dashboard-editor-component.js')
+];
