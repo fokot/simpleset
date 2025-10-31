@@ -87,6 +87,8 @@ export class DashboardEditorComponent extends LitElement {
       display: flex;
       align-items: center;
       gap: 10px;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .widget-item:hover {
@@ -96,6 +98,14 @@ export class DashboardEditorComponent extends LitElement {
     }
 
     .widget-item:active {
+      cursor: grabbing;
+    }
+
+    .widget-item[draggable="true"] {
+      cursor: grab;
+    }
+
+    .widget-item[draggable="true"]:active {
       cursor: grabbing;
     }
 
@@ -214,6 +224,17 @@ export class DashboardEditorComponent extends LitElement {
       min-height: 600px;
       padding: 24px;
       position: relative;
+      transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .dashboard-canvas.drag-over {
+      background: rgba(102, 126, 234, 0.05);
+      box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3) inset;
+    }
+
+    .dashboard-canvas.drag-over.invalid-position {
+      background: rgba(239, 68, 68, 0.05);
+      box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3) inset;
     }
 
     .dashboard-grid {
@@ -256,6 +277,8 @@ export class DashboardEditorComponent extends LitElement {
       position: relative;
       cursor: move;
       transition: all 0.2s ease;
+      user-select: none;
+      -webkit-user-select: none;
     }
 
     .widget-container:hover {
@@ -271,6 +294,28 @@ export class DashboardEditorComponent extends LitElement {
     .widget-container.selected {
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .widget-container[draggable="true"] {
+      cursor: grab;
+    }
+
+    .widget-container[draggable="true"]:active {
+      cursor: grabbing;
+    }
+
+    .widget-preview {
+      background: rgba(102, 126, 234, 0.1);
+      border: 2px dashed rgba(102, 126, 234, 0.5);
+      border-radius: 8px;
+      position: relative;
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .widget-preview.invalid {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.5);
     }
 
     .widget-header {
@@ -382,6 +427,15 @@ export class DashboardEditorComponent extends LitElement {
   @state()
   private _columns: number = 12;
 
+  @state()
+  private _isDragOver: boolean = false;
+
+  @state()
+  private _invalidDropPosition: boolean = false;
+
+  @state()
+  private _previewPosition: WidgetPosition | null = null;
+
   private _widgetIdCounter = 0;
 
   connectedCallback() {
@@ -395,16 +449,10 @@ export class DashboardEditorComponent extends LitElement {
       this._dashboardName = this.dashboard.name;
       this._columns = this.dashboard.layout.columns || 12;
     }
-
-    // Add global event listeners for drag and drop
-    document.addEventListener('mousemove', this._handleMouseMove);
-    document.addEventListener('mouseup', this._handleMouseUp);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
-    document.removeEventListener('mousemove', this._handleMouseMove);
-    document.removeEventListener('mouseup', this._handleMouseUp);
   }
 
   private _initializeDefaultDashboard() {
@@ -417,8 +465,18 @@ export class DashboardEditorComponent extends LitElement {
     return `widget-${Date.now()}-${++this._widgetIdCounter}`;
   }
 
-  private _handlePaletteItemDragStart = (e: MouseEvent, widgetType: WidgetType) => {
-    e.preventDefault();
+  private _handlePaletteItemDragStart = (e: DragEvent, widgetType: WidgetType) => {
+    if (!e.dataTransfer) return;
+
+    // Set the data being dragged
+    e.dataTransfer.effectAllowed = 'copy';
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      isNewWidget: true,
+      widgetType: widgetType
+    }));
+
+    // Set drag image
+    e.dataTransfer.setDragImage(e.currentTarget as Element, 0, 0);
 
     this._dragState = {
       isDragging: true,
@@ -431,9 +489,17 @@ export class DashboardEditorComponent extends LitElement {
     };
   };
 
-  private _handleWidgetDragStart = (e: MouseEvent, widget: DashboardWidget) => {
-    e.preventDefault();
+  private _handleWidgetDragStart = (e: DragEvent, widget: DashboardWidget) => {
+    if (!e.dataTransfer) return;
+
     e.stopPropagation();
+
+    // Set the data being dragged
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('application/json', JSON.stringify({
+      isNewWidget: false,
+      widgetId: widget.id
+    }));
 
     this._dragState = {
       isDragging: true,
@@ -448,24 +514,25 @@ export class DashboardEditorComponent extends LitElement {
     this._selectedWidgetId = widget.id;
   };
 
-  private _handleMouseMove = (e: MouseEvent) => {
-    if (!this._dragState.isDragging) return;
+  private _handleDragOver = (e: DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = this._dragState.isNewWidget ? 'copy' : 'move';
+    }
+    this._isDragOver = true;
 
-    this._dragState = {
-      ...this._dragState,
-      offsetX: e.clientX - this._dragState.startX,
-      offsetY: e.clientY - this._dragState.startY,
-    };
-
-    this.requestUpdate();
+    // Check for collision at current mouse position
+    this._checkDragCollision(e);
   };
 
-  private _handleMouseUp = (e: MouseEvent) => {
-    if (!this._dragState.isDragging) return;
-
+  /**
+   * Check if dropping at the current mouse position would cause a collision
+   */
+  private _checkDragCollision(e: DragEvent) {
     const canvasElement = this.shadowRoot?.querySelector('.dashboard-grid') as HTMLElement;
     if (!canvasElement) {
-      this._dragState = { ...this._dragState, isDragging: false };
+      this._invalidDropPosition = false;
+      this._previewPosition = null;
       return;
     }
 
@@ -473,12 +540,99 @@ export class DashboardEditorComponent extends LitElement {
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // Check if drop is within canvas
-    if (x >= 0 && x <= rect.width && y >= 0 && y <= rect.height) {
-      if (this._dragState.isNewWidget && this._dragState.draggedWidgetType) {
-        this._addNewWidget(this._dragState.draggedWidgetType, x, y, rect.width);
-      } else if (this._dragState.draggedWidget) {
-        this._moveWidget(this._dragState.draggedWidget, x, y, rect.width);
+    const cellWidth = rect.width / this._columns;
+    const gridX = Math.floor(x / cellWidth);
+    const gridY = Math.floor(y / 100);
+
+    // Determine the size of the widget being dragged
+    let width = 4;
+    let height = 3;
+    let excludeWidgetId: string | undefined;
+
+    if (this._dragState.draggedWidget) {
+      width = this._dragState.draggedWidget.position.width;
+      height = this._dragState.draggedWidget.position.height;
+      excludeWidgetId = this._dragState.draggedWidget.id;
+    }
+
+    const testPosition: WidgetPosition = {
+      x: Math.max(0, Math.min(gridX, this._columns - width)),
+      y: Math.max(0, gridY),
+      width,
+      height,
+    };
+
+    // Check if this position would collide
+    this._invalidDropPosition = this._hasCollision(testPosition, excludeWidgetId);
+
+    // Set preview position for visual feedback
+    this._previewPosition = testPosition;
+  }
+
+  private _handleDragEnter = (e: DragEvent) => {
+    e.preventDefault();
+    this._isDragOver = true;
+  };
+
+  private _handleDragLeave = (e: DragEvent) => {
+    // Check if we're actually leaving the canvas (not just entering a child element)
+    const target = e.currentTarget as HTMLElement;
+    const relatedTarget = e.relatedTarget as HTMLElement;
+
+    if (!target.contains(relatedTarget)) {
+      this._isDragOver = false;
+      this._invalidDropPosition = false;
+      this._previewPosition = null;
+    }
+  };
+
+  private _handleDrop = (e: DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    this._isDragOver = false;
+    this._invalidDropPosition = false;
+    this._previewPosition = null;
+
+    if (!e.dataTransfer) return;
+
+    const canvasElement = this.shadowRoot?.querySelector('.dashboard-grid') as HTMLElement;
+    if (!canvasElement) {
+      // If no grid exists yet (empty state), use the canvas itself
+      const canvas = this.shadowRoot?.querySelector('.dashboard-canvas') as HTMLElement;
+      if (!canvas) return;
+
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      try {
+        const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+
+        if (dragData.isNewWidget && dragData.widgetType) {
+          this._addNewWidget(dragData.widgetType, x, y, rect.width);
+        }
+      } catch (error) {
+        console.error('Error parsing drag data:', error);
+      }
+    } else {
+      const rect = canvasElement.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+
+      try {
+        const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+
+        if (dragData.isNewWidget && dragData.widgetType) {
+          this._addNewWidget(dragData.widgetType, x, y, rect.width);
+        } else if (!dragData.isNewWidget && dragData.widgetId) {
+          const widget = this._widgets.find(w => w.id === dragData.widgetId);
+          if (widget) {
+            this._moveWidget(widget, x, y, rect.width);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing drag data:', error);
       }
     }
 
@@ -494,20 +648,133 @@ export class DashboardEditorComponent extends LitElement {
     this.requestUpdate();
   };
 
+  private _handleDragEnd = (e: DragEvent) => {
+    this._isDragOver = false;
+    this._invalidDropPosition = false;
+    this._previewPosition = null;
+    this._dragState = {
+      isDragging: false,
+      isNewWidget: false,
+      startX: 0,
+      startY: 0,
+      offsetX: 0,
+      offsetY: 0,
+    };
+    this.requestUpdate();
+  };
+
+  /**
+   * Check if two widgets overlap in the grid
+   */
+  private _checkCollision(
+    pos1: WidgetPosition,
+    pos2: WidgetPosition
+  ): boolean {
+    // Check if rectangles overlap
+    const x1End = pos1.x + pos1.width;
+    const y1End = pos1.y + pos1.height;
+    const x2End = pos2.x + pos2.width;
+    const y2End = pos2.y + pos2.height;
+
+    // No overlap if one rectangle is to the left, right, above, or below the other
+    if (x1End <= pos2.x || x2End <= pos1.x || y1End <= pos2.y || y2End <= pos1.y) {
+      return false;
+    }
+
+    return true;
+  }
+
+  /**
+   * Check if a widget at the given position would collide with any existing widgets
+   * @param position The position to check
+   * @param excludeWidgetId Optional widget ID to exclude from collision check (for moving widgets)
+   */
+  private _hasCollision(
+    position: WidgetPosition,
+    excludeWidgetId?: string
+  ): boolean {
+    return this._widgets.some(widget => {
+      if (excludeWidgetId && widget.id === excludeWidgetId) {
+        return false;
+      }
+      return this._checkCollision(position, widget.position);
+    });
+  }
+
+  /**
+   * Find the nearest valid position for a widget by trying positions in a spiral pattern
+   */
+  private _findNearestValidPosition(
+    preferredPosition: WidgetPosition,
+    excludeWidgetId?: string
+  ): WidgetPosition {
+    // First check if the preferred position is valid
+    if (!this._hasCollision(preferredPosition, excludeWidgetId)) {
+      return preferredPosition;
+    }
+
+    // Try positions in a spiral pattern around the preferred position
+    const maxAttempts = 50;
+    let attempt = 0;
+
+    for (let radius = 1; radius <= 10 && attempt < maxAttempts; radius++) {
+      // Try positions at this radius
+      for (let dx = -radius; dx <= radius && attempt < maxAttempts; dx++) {
+        for (let dy = -radius; dy <= radius && attempt < maxAttempts; dy++) {
+          // Only check positions on the perimeter of the current radius
+          if (Math.abs(dx) !== radius && Math.abs(dy) !== radius) {
+            continue;
+          }
+
+          attempt++;
+          const testPosition: WidgetPosition = {
+            ...preferredPosition,
+            x: Math.max(0, Math.min(preferredPosition.x + dx, this._columns - preferredPosition.width)),
+            y: Math.max(0, preferredPosition.y + dy),
+          };
+
+          if (!this._hasCollision(testPosition, excludeWidgetId)) {
+            return testPosition;
+          }
+        }
+      }
+    }
+
+    // If no valid position found, try placing at the bottom
+    let bottomY = 0;
+    this._widgets.forEach(widget => {
+      if (!excludeWidgetId || widget.id !== excludeWidgetId) {
+        bottomY = Math.max(bottomY, widget.position.y + widget.position.height);
+      }
+    });
+
+    return {
+      ...preferredPosition,
+      x: 0,
+      y: bottomY,
+    };
+  }
+
   private _addNewWidget(widgetType: WidgetType, x: number, y: number, canvasWidth: number) {
     const cellWidth = canvasWidth / this._columns;
     const gridX = Math.floor(x / cellWidth);
     const gridY = Math.floor(y / 100); // Assuming row height of 100px
 
+    // Calculate preferred position
+    const preferredPosition: WidgetPosition = {
+      x: Math.max(0, Math.min(gridX, this._columns - 4)),
+      y: Math.max(0, gridY),
+      width: 4,
+      height: 3,
+    };
+
+    // Find valid position (will auto-adjust if collision detected)
+    const validPosition = this._findNearestValidPosition(preferredPosition);
+
     const newWidget: DashboardWidget = {
       id: this._generateWidgetId(),
       title: this._getDefaultWidgetTitle(widgetType),
-      position: {
-        x: Math.max(0, Math.min(gridX, this._columns - 4)),
-        y: gridY,
-        width: 4,
-        height: 3,
-      },
+      position: validPosition,
       config: this._getDefaultWidgetConfig(widgetType),
       visible: true,
     };
@@ -521,13 +788,19 @@ export class DashboardEditorComponent extends LitElement {
     const gridX = Math.floor(x / cellWidth);
     const gridY = Math.floor(y / 100);
 
+    // Calculate preferred position
+    const preferredPosition: WidgetPosition = {
+      ...widget.position,
+      x: Math.max(0, Math.min(gridX, this._columns - widget.position.width)),
+      y: Math.max(0, gridY),
+    };
+
+    // Find valid position (will auto-adjust if collision detected)
+    const validPosition = this._findNearestValidPosition(preferredPosition, widget.id);
+
     const updatedWidget = {
       ...widget,
-      position: {
-        ...widget.position,
-        x: Math.max(0, Math.min(gridX, this._columns - widget.position.width)),
-        y: Math.max(0, gridY),
-      },
+      position: validPosition,
     };
 
     this._widgets = this._widgets.map(w => w.id === widget.id ? updatedWidget : w);
@@ -655,7 +928,9 @@ export class DashboardEditorComponent extends LitElement {
           ${widgetTypes.map(widget => html`
             <div
               class="widget-item"
-              @mousedown="${(e: MouseEvent) => this._handlePaletteItemDragStart(e, widget.type)}"
+              draggable="true"
+              @dragstart="${(e: DragEvent) => this._handlePaletteItemDragStart(e, widget.type)}"
+              @dragend="${this._handleDragEnd}"
             >
               <div class="widget-icon">${widget.icon}</div>
               <div class="widget-info">
@@ -693,6 +968,23 @@ export class DashboardEditorComponent extends LitElement {
     `;
   }
 
+  private _renderPreviewWidget() {
+    if (!this._previewPosition) return '';
+
+    const previewClasses = [
+      'widget-preview',
+      this._invalidDropPosition ? 'invalid' : ''
+    ].filter(Boolean).join(' ');
+
+    return html`
+      <div
+        class="${previewClasses}"
+        style="${this._getWidgetGridStyle({ position: this._previewPosition } as DashboardWidget)}"
+      >
+      </div>
+    `;
+  }
+
   private _renderWidget(widget: DashboardWidget) {
     const isSelected = this._selectedWidgetId === widget.id;
     const isDragging = this._dragState.isDragging && this._dragState.draggedWidget?.id === widget.id;
@@ -701,7 +993,9 @@ export class DashboardEditorComponent extends LitElement {
       <div
         class="widget-container ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}"
         style="${this._getWidgetGridStyle(widget)}"
-        @mousedown="${(e: MouseEvent) => this._handleWidgetDragStart(e, widget)}"
+        draggable="true"
+        @dragstart="${(e: DragEvent) => this._handleWidgetDragStart(e, widget)}"
+        @dragend="${this._handleDragEnd}"
         @click="${() => this._selectWidget(widget.id)}"
       >
         <div class="widget-header">
@@ -727,9 +1021,21 @@ export class DashboardEditorComponent extends LitElement {
   }
 
   private _renderCanvas() {
+    const canvasClasses = [
+      'dashboard-canvas',
+      this._isDragOver ? 'drag-over' : '',
+      this._invalidDropPosition ? 'invalid-position' : ''
+    ].filter(Boolean).join(' ');
+
     return html`
       <div class="canvas-container">
-        <div class="dashboard-canvas">
+        <div
+          class="${canvasClasses}"
+          @dragover="${this._handleDragOver}"
+          @dragenter="${this._handleDragEnter}"
+          @dragleave="${this._handleDragLeave}"
+          @drop="${this._handleDrop}"
+        >
           ${this._widgets.length === 0 ? html`
             <div class="empty-state">
               <div class="empty-state-icon">🎨</div>
@@ -749,6 +1055,7 @@ export class DashboardEditorComponent extends LitElement {
                 `)}
               </div>
               ${this._widgets.map(widget => this._renderWidget(widget))}
+              ${this._previewPosition ? this._renderPreviewWidget() : ''}
             </div>
           `}
         </div>
