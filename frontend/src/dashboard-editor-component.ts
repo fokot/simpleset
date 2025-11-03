@@ -1,6 +1,7 @@
 import { LitElement, html, css, PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import { Dashboard, DashboardWidget, WidgetType, WidgetPosition } from './types/dashboard-types.js';
+import { Dashboard, DashboardWidget, WidgetType, WidgetPosition, TextWidgetConfig, ImageWidgetConfig, MarkdownWidgetConfig } from './types/dashboard-types.js';
+import { ChartData } from './widgets/chart-widget.js';
 import './widgets/index.js';
 
 interface DragState {
@@ -12,6 +13,17 @@ interface DragState {
   startY: number;
   offsetX: number;
   offsetY: number;
+}
+
+type ResizeHandle = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+
+interface ResizeState {
+  isResizing: boolean;
+  widgetId?: string;
+  handle?: ResizeHandle;
+  startX: number;
+  startY: number;
+  startPosition?: WidgetPosition;
 }
 
 @customElement('dashboard-editor')
@@ -135,6 +147,89 @@ export class DashboardEditorComponent extends LitElement {
       display: flex;
       flex-direction: column;
       overflow: hidden;
+    }
+
+    .properties-panel {
+      width: 320px;
+      background: white;
+      border-left: 1px solid #e0e0e0;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .properties-header {
+      padding: 20px;
+      border-bottom: 1px solid #e0e0e0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .properties-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .properties-content {
+      padding: 20px;
+    }
+
+    .property-group {
+      margin-bottom: 20px;
+    }
+
+    .property-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #666;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .property-input,
+    .property-textarea,
+    .property-select {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid #cbd5e0;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      transition: border-color 0.2s ease;
+    }
+
+    .property-input:focus,
+    .property-textarea:focus,
+    .property-select:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    .property-textarea {
+      min-height: 100px;
+      resize: vertical;
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .property-number {
+      width: 100%;
+    }
+
+    .property-color {
+      width: 100%;
+      height: 40px;
+      cursor: pointer;
+    }
+
+    .empty-properties {
+      text-align: center;
+      color: #999;
+      padding: 40px 20px;
+      font-size: 0.9rem;
     }
 
     .toolbar {
@@ -291,9 +386,19 @@ export class DashboardEditorComponent extends LitElement {
       cursor: grabbing;
     }
 
+    .widget-container.resizing {
+      cursor: default;
+    }
+
     .widget-container.selected {
       border-color: #667eea;
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .widget-container.drop-target {
+      border-color: #10b981;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+      background: rgba(16, 185, 129, 0.05);
     }
 
     .widget-container[draggable="true"] {
@@ -302,6 +407,80 @@ export class DashboardEditorComponent extends LitElement {
 
     .widget-container[draggable="true"]:active {
       cursor: grabbing;
+    }
+
+    .resize-handle {
+      position: absolute;
+      background: transparent;
+      z-index: 10;
+    }
+
+    .resize-handle:hover {
+      background: rgba(102, 126, 234, 0.3);
+    }
+
+    .resize-handle.n {
+      top: -4px;
+      left: 8px;
+      right: 8px;
+      height: 8px;
+      cursor: ns-resize;
+    }
+
+    .resize-handle.s {
+      bottom: -4px;
+      left: 8px;
+      right: 8px;
+      height: 8px;
+      cursor: ns-resize;
+    }
+
+    .resize-handle.e {
+      right: -4px;
+      top: 8px;
+      bottom: 8px;
+      width: 8px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle.w {
+      left: -4px;
+      top: 8px;
+      bottom: 8px;
+      width: 8px;
+      cursor: ew-resize;
+    }
+
+    .resize-handle.ne {
+      top: -4px;
+      right: -4px;
+      width: 12px;
+      height: 12px;
+      cursor: nesw-resize;
+    }
+
+    .resize-handle.nw {
+      top: -4px;
+      left: -4px;
+      width: 12px;
+      height: 12px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle.se {
+      bottom: -4px;
+      right: -4px;
+      width: 12px;
+      height: 12px;
+      cursor: nwse-resize;
+    }
+
+    .resize-handle.sw {
+      bottom: -4px;
+      left: -4px;
+      width: 12px;
+      height: 12px;
+      cursor: nesw-resize;
     }
 
     .widget-preview {
@@ -436,6 +615,16 @@ export class DashboardEditorComponent extends LitElement {
   @state()
   private _previewPosition: WidgetPosition | null = null;
 
+  @state()
+  private _dropTargetWidgetId: string | null = null;
+
+  @state()
+  private _resizeState: ResizeState = {
+    isResizing: false,
+    startX: 0,
+    startY: 0,
+  };
+
   private _widgetIdCounter = 0;
 
   connectedCallback() {
@@ -491,6 +680,12 @@ export class DashboardEditorComponent extends LitElement {
 
   private _handleWidgetDragStart = (e: DragEvent, widget: DashboardWidget) => {
     if (!e.dataTransfer) return;
+
+    // Don't start dragging if we're resizing
+    if (this._resizeState.isResizing) {
+      e.preventDefault();
+      return;
+    }
 
     e.stopPropagation();
 
@@ -652,6 +847,7 @@ export class DashboardEditorComponent extends LitElement {
     this._isDragOver = false;
     this._invalidDropPosition = false;
     this._previewPosition = null;
+    this._dropTargetWidgetId = null;
     this._dragState = {
       isDragging: false,
       isNewWidget: false,
@@ -660,6 +856,204 @@ export class DashboardEditorComponent extends LitElement {
       offsetX: 0,
       offsetY: 0,
     };
+    this.requestUpdate();
+  };
+
+  private _handleWidgetDragOver = (e: DragEvent, widget: DashboardWidget) => {
+    // Only handle if we're dragging a new widget from the palette
+    if (!this._dragState.isNewWidget) {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'copy';
+    }
+
+    // Mark this widget as the drop target
+    this._dropTargetWidgetId = widget.id;
+  };
+
+  private _handleWidgetDragLeave = (e: DragEvent, widget: DashboardWidget) => {
+    // Only handle if we're dragging a new widget from the palette
+    if (!this._dragState.isNewWidget) {
+      return;
+    }
+
+    // Check if we're actually leaving the widget (not just entering a child element)
+    const target = e.currentTarget as HTMLElement;
+    const relatedTarget = e.relatedTarget as HTMLElement;
+
+    if (!target.contains(relatedTarget)) {
+      if (this._dropTargetWidgetId === widget.id) {
+        this._dropTargetWidgetId = null;
+      }
+    }
+  };
+
+  private _handleWidgetDrop = (e: DragEvent, widget: DashboardWidget) => {
+    // Only handle if we're dragging a new widget from the palette
+    if (!this._dragState.isNewWidget) {
+      return;
+    }
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    this._isDragOver = false;
+    this._invalidDropPosition = false;
+    this._previewPosition = null;
+    this._dropTargetWidgetId = null;
+
+    if (!e.dataTransfer) return;
+
+    try {
+      const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+
+      if (dragData.isNewWidget && dragData.widgetType) {
+        // Add the new widget and resize the target widget to make room
+        this._addNewWidgetOntoWidget(dragData.widgetType, widget);
+      }
+    } catch (error) {
+      console.error('Error parsing drag data:', error);
+    }
+
+    this._dragState = {
+      isDragging: false,
+      isNewWidget: false,
+      startX: 0,
+      startY: 0,
+      offsetX: 0,
+      offsetY: 0,
+    };
+
+    this.requestUpdate();
+  };
+
+  private _handleResizeStart = (e: MouseEvent, widget: DashboardWidget, handle: ResizeHandle) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    this._resizeState = {
+      isResizing: true,
+      widgetId: widget.id,
+      handle,
+      startX: e.clientX,
+      startY: e.clientY,
+      startPosition: { ...widget.position },
+    };
+
+    // Add global mouse event listeners
+    document.addEventListener('mousemove', this._handleResizeMove);
+    document.addEventListener('mouseup', this._handleResizeEnd);
+  };
+
+  private _handleResizeMove = (e: MouseEvent) => {
+    if (!this._resizeState.isResizing || !this._resizeState.widgetId || !this._resizeState.startPosition) {
+      return;
+    }
+
+    const widget = this._widgets.find(w => w.id === this._resizeState.widgetId);
+    if (!widget) return;
+
+    const canvasElement = this.shadowRoot?.querySelector('.dashboard-grid') as HTMLElement;
+    if (!canvasElement) return;
+
+    const rect = canvasElement.getBoundingClientRect();
+    const cellWidth = rect.width / this._columns;
+    const cellHeight = 100; // Row height
+
+    // Calculate delta in pixels
+    const deltaX = e.clientX - this._resizeState.startX;
+    const deltaY = e.clientY - this._resizeState.startY;
+
+    // Convert to grid units
+    const deltaGridX = Math.round(deltaX / cellWidth);
+    const deltaGridY = Math.round(deltaY / cellHeight);
+
+    const startPos = this._resizeState.startPosition;
+    const handle = this._resizeState.handle!;
+
+    let newPosition: WidgetPosition = { ...startPos };
+
+    // Calculate new position based on which handle is being dragged
+    switch (handle) {
+      case 'e': // East (right edge)
+        newPosition.width = Math.max(2, startPos.width + deltaGridX);
+        break;
+      case 'w': // West (left edge)
+        const newWidthW = Math.max(2, startPos.width - deltaGridX);
+        const deltaWidthW = startPos.width - newWidthW;
+        newPosition.x = startPos.x + deltaWidthW;
+        newPosition.width = newWidthW;
+        break;
+      case 's': // South (bottom edge)
+        newPosition.height = Math.max(2, startPos.height + deltaGridY);
+        break;
+      case 'n': // North (top edge)
+        const newHeightN = Math.max(2, startPos.height - deltaGridY);
+        const deltaHeightN = startPos.height - newHeightN;
+        newPosition.y = Math.max(0, startPos.y + deltaHeightN);
+        newPosition.height = newHeightN;
+        break;
+      case 'se': // Southeast (bottom-right corner)
+        newPosition.width = Math.max(2, startPos.width + deltaGridX);
+        newPosition.height = Math.max(2, startPos.height + deltaGridY);
+        break;
+      case 'sw': // Southwest (bottom-left corner)
+        const newWidthSW = Math.max(2, startPos.width - deltaGridX);
+        const deltaWidthSW = startPos.width - newWidthSW;
+        newPosition.x = startPos.x + deltaWidthSW;
+        newPosition.width = newWidthSW;
+        newPosition.height = Math.max(2, startPos.height + deltaGridY);
+        break;
+      case 'ne': // Northeast (top-right corner)
+        newPosition.width = Math.max(2, startPos.width + deltaGridX);
+        const newHeightNE = Math.max(2, startPos.height - deltaGridY);
+        const deltaHeightNE = startPos.height - newHeightNE;
+        newPosition.y = Math.max(0, startPos.y + deltaHeightNE);
+        newPosition.height = newHeightNE;
+        break;
+      case 'nw': // Northwest (top-left corner)
+        const newWidthNW = Math.max(2, startPos.width - deltaGridX);
+        const deltaWidthNW = startPos.width - newWidthNW;
+        newPosition.x = startPos.x + deltaWidthNW;
+        newPosition.width = newWidthNW;
+        const newHeightNW = Math.max(2, startPos.height - deltaGridY);
+        const deltaHeightNW = startPos.height - newHeightNW;
+        newPosition.y = Math.max(0, startPos.y + deltaHeightNW);
+        newPosition.height = newHeightNW;
+        break;
+    }
+
+    // Ensure widget stays within grid bounds
+    newPosition.x = Math.max(0, Math.min(newPosition.x, this._columns - 1));
+    newPosition.width = Math.min(newPosition.width, this._columns - newPosition.x);
+
+    // Check for collisions with other widgets
+    const hasCollision = this._hasCollision(newPosition, widget.id);
+
+    if (!hasCollision) {
+      // Update widget position
+      this._widgets = this._widgets.map(w =>
+        w.id === widget.id ? { ...w, position: newPosition } : w
+      );
+    }
+  };
+
+  private _handleResizeEnd = (e: MouseEvent) => {
+    this._resizeState = {
+      isResizing: false,
+      startX: 0,
+      startY: 0,
+    };
+
+    // Remove global mouse event listeners
+    document.removeEventListener('mousemove', this._handleResizeMove);
+    document.removeEventListener('mouseup', this._handleResizeEnd);
+
     this.requestUpdate();
   };
 
@@ -783,6 +1177,45 @@ export class DashboardEditorComponent extends LitElement {
     this._selectedWidgetId = newWidget.id;
   }
 
+  private _addNewWidgetOntoWidget(widgetType: WidgetType, targetWidget: DashboardWidget) {
+    // Resize the target widget to make room for the new widget
+    // Split the target widget horizontally (reduce width by half)
+    const newTargetWidth = Math.max(2, Math.floor(targetWidget.position.width / 2));
+    const newWidgetWidth = targetWidget.position.width - newTargetWidth;
+
+    // Update the target widget's width
+    const updatedTargetWidget: DashboardWidget = {
+      ...targetWidget,
+      position: {
+        ...targetWidget.position,
+        width: newTargetWidth,
+      },
+    };
+
+    // Create the new widget positioned to the right of the resized target widget
+    const newWidget: DashboardWidget = {
+      id: this._generateWidgetId(),
+      title: this._getDefaultWidgetTitle(widgetType),
+      position: {
+        x: targetWidget.position.x + newTargetWidth,
+        y: targetWidget.position.y,
+        width: newWidgetWidth,
+        height: targetWidget.position.height,
+      },
+      config: this._getDefaultWidgetConfig(widgetType),
+      visible: true,
+    };
+
+    // Update the widgets array - only modify the target widget, not all widgets
+    this._widgets = this._widgets.map(w =>
+      w.id === targetWidget.id ? updatedTargetWidget : w
+    );
+
+    // Add the new widget
+    this._widgets = [...this._widgets, newWidget];
+    this._selectedWidgetId = newWidget.id;
+  }
+
   private _moveWidget(widget: DashboardWidget, x: number, y: number, canvasWidth: number) {
     const cellWidth = canvasWidth / this._columns;
     const gridX = Math.floor(x / cellWidth);
@@ -823,7 +1256,20 @@ export class DashboardEditorComponent extends LitElement {
   private _getDefaultWidgetConfig(widgetType: WidgetType): any {
     switch (widgetType) {
       case 'chart':
-        return { type: 'chart' };
+        return {
+          type: 'chart',
+          chartType: 'bar',
+          chartData: {
+            type: 'bar',
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+              label: 'Sample Data',
+              data: [12, 19, 3, 5, 2, 3],
+              backgroundColor: '#2196F3',
+              borderColor: '#1976D2'
+            }]
+          }
+        };
       case 'metric':
         return {
           type: 'metric',
@@ -847,6 +1293,29 @@ export class DashboardEditorComponent extends LitElement {
           type: 'text',
           config: {
             content: 'Enter your text here...',
+            fontSize: 16,
+            fontWeight: 'normal',
+            textAlign: 'left',
+            color: '#1a1a1a',
+          },
+        };
+      case 'image':
+        return {
+          type: 'image',
+          config: {
+            src: 'https://via.placeholder.com/400x300',
+            alt: 'Placeholder image',
+            fit: 'contain',
+          },
+        };
+      case 'markdown':
+        return {
+          type: 'markdown',
+          config: {
+            content: '# Markdown Widget\n\nEdit this content to display **formatted** text.\n\n- Item 1\n- Item 2\n- Item 3',
+            allowHtml: false,
+            breaks: true,
+            linkify: true,
           },
         };
       default:
@@ -985,19 +1454,86 @@ export class DashboardEditorComponent extends LitElement {
     `;
   }
 
+  private _renderWidgetContent(widget: DashboardWidget) {
+    switch (widget.config.type) {
+      case 'metric':
+        return html`
+          <metric-widget
+            .config="${widget.config.config}"
+            .data="${{ value: widget.config.config?.value || 0 }}"
+          ></metric-widget>
+        `;
+      case 'text':
+        return html`
+          <text-widget .config="${widget.config.config}"></text-widget>
+        `;
+      case 'image':
+        return html`
+          <image-widget .config="${widget.config.config}"></image-widget>
+        `;
+      case 'markdown':
+        return html`
+          <markdown-widget .config="${widget.config.config}"></markdown-widget>
+        `;
+      case 'table':
+        return html`
+          <table-widget
+            .config="${widget.config.config}"
+            .data="${[]}"
+          ></table-widget>
+        `;
+      case 'chart':
+        return html`
+          <chart-widget
+            .config="${widget.config}"
+            .data="${(widget.config as any).chartData || this._getDefaultChartData()}"
+          ></chart-widget>
+        `;
+      default:
+        return html`<div>${widget.config.type} widget placeholder</div>`;
+    }
+  }
+
+  private _getDefaultChartData(): ChartData {
+    return {
+      type: 'bar',
+      labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+      datasets: [{
+        label: 'Sample Data',
+        data: [12, 19, 3, 5, 2, 3],
+        backgroundColor: '#2196F3',
+        borderColor: '#1976D2'
+      }]
+    };
+  }
+
   private _renderWidget(widget: DashboardWidget) {
     const isSelected = this._selectedWidgetId === widget.id;
     const isDragging = this._dragState.isDragging && this._dragState.draggedWidget?.id === widget.id;
+    const isDropTarget = this._dropTargetWidgetId === widget.id;
+    const isResizing = this._resizeState.isResizing && this._resizeState.widgetId === widget.id;
+
+    const resizeHandles: ResizeHandle[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
     return html`
       <div
-        class="widget-container ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''}"
+        class="widget-container ${isSelected ? 'selected' : ''} ${isDragging ? 'dragging' : ''} ${isDropTarget ? 'drop-target' : ''} ${isResizing ? 'resizing' : ''}"
         style="${this._getWidgetGridStyle(widget)}"
-        draggable="true"
+        draggable="${!isResizing}"
         @dragstart="${(e: DragEvent) => this._handleWidgetDragStart(e, widget)}"
         @dragend="${this._handleDragEnd}"
+        @dragover="${(e: DragEvent) => this._handleWidgetDragOver(e, widget)}"
+        @dragleave="${(e: DragEvent) => this._handleWidgetDragLeave(e, widget)}"
+        @drop="${(e: DragEvent) => this._handleWidgetDrop(e, widget)}"
         @click="${() => this._selectWidget(widget.id)}"
       >
+        ${isSelected ? resizeHandles.map(handle => html`
+          <div
+            class="resize-handle ${handle}"
+            @mousedown="${(e: MouseEvent) => this._handleResizeStart(e, widget, handle)}"
+          ></div>
+        `) : ''}
+
         <div class="widget-header">
           <h3 class="widget-title">${widget.title || 'Untitled Widget'}</h3>
           <div class="widget-actions">
@@ -1005,8 +1541,7 @@ export class DashboardEditorComponent extends LitElement {
               class="widget-action-btn delete"
               @click="${(e: Event) => {
                 e.stopPropagation();
-                this._deleteWidget(widget.id);
-              }}"
+                this._deleteWidget(widget.id)}}}"
               title="Delete widget"
             >
               ✕
@@ -1014,7 +1549,7 @@ export class DashboardEditorComponent extends LitElement {
           </div>
         </div>
         <div class="widget-content">
-          ${widget.config.type} widget placeholder
+          ${this._renderWidgetContent(widget)}
         </div>
       </div>
     `;
@@ -1063,6 +1598,353 @@ export class DashboardEditorComponent extends LitElement {
     `;
   }
 
+  private _updateWidgetConfig(widgetId: string, configPath: string, value: any) {
+    this._widgets = this._widgets.map(w => {
+      if (w.id === widgetId) {
+        const updatedWidget = { ...w };
+        const pathParts = configPath.split('.');
+        let current: any = updatedWidget;
+
+        for (let i = 0; i < pathParts.length - 1; i++) {
+          current = current[pathParts[i]];
+        }
+
+        current[pathParts[pathParts.length - 1]] = value;
+        return updatedWidget;
+      }
+      return w;
+    });
+  }
+
+  private _renderPropertiesPanel() {
+    const selectedWidget = this._widgets.find(w => w.id === this._selectedWidgetId);
+
+    if (!selectedWidget) {
+      return html`
+        <div class="properties-panel">
+          <div class="properties-header">
+            <h3 class="properties-title">Properties</h3>
+          </div>
+          <div class="empty-properties">
+            Select a widget to edit its properties
+          </div>
+        </div>
+      `;
+    }
+
+    return html`
+      <div class="properties-panel">
+        <div class="properties-header">
+          <h3 class="properties-title">Widget Properties</h3>
+        </div>
+        <div class="properties-content">
+          <div class="property-group">
+            <label class="property-label">Widget Title</label>
+            <input
+              type="text"
+              class="property-input"
+              .value="${selectedWidget.title || ''}"
+              @input="${(e: Event) => {
+                const input = e.target as HTMLInputElement;
+                this._updateWidgetConfig(selectedWidget.id, 'title', input.value);
+              }}"
+            />
+          </div>
+
+          ${this._renderWidgetSpecificProperties(selectedWidget)}
+        </div>
+      </div>
+    `;
+  }
+
+  private _renderWidgetSpecificProperties(widget: DashboardWidget) {
+    switch (widget.config.type) {
+      case 'chart':
+        return this._renderChartWidgetProperties(widget);
+      case 'text':
+        return this._renderTextWidgetProperties(widget);
+      case 'image':
+        return this._renderImageWidgetProperties(widget);
+      case 'markdown':
+        return this._renderMarkdownWidgetProperties(widget);
+      default:
+        return html``;
+    }
+  }
+
+  private _renderChartWidgetProperties(widget: DashboardWidget) {
+    if (widget.config.type !== 'chart') return html``;
+    const chartType = (widget.config as any).chartType || 'bar';
+    const chartData = (widget.config as any).chartData || this._getDefaultChartData();
+
+    return html`
+      <div class="property-group">
+        <label class="property-label">Chart Type</label>
+        <select
+          class="property-select"
+          .value="${chartType}"
+          @change="${(e: Event) => {
+            const select = e.target as HTMLSelectElement;
+            const newType = select.value;
+            this._updateWidgetConfig(widget.id, 'config.chartType', newType);
+
+            // Update chart data type to match
+            const currentData = (widget.config as any).chartData || this._getDefaultChartData();
+            this._updateWidgetConfig(widget.id, 'config.chartData', {
+              ...currentData,
+              type: newType
+            });
+          }}"
+        >
+          <option value="bar">Bar Chart</option>
+          <option value="line">Line Chart</option>
+          <option value="area">Area Chart</option>
+          <option value="pie">Pie Chart</option>
+          <option value="doughnut">Doughnut Chart</option>
+          <option value="scatter">Scatter Chart</option>
+          <option value="radar">Radar Chart</option>
+        </select>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Sample Data (JSON)</label>
+        <textarea
+          class="property-textarea"
+          style="font-family: monospace; min-height: 200px;"
+          .value="${JSON.stringify(chartData, null, 2)}"
+          @input="${(e: Event) => {
+            const textarea = e.target as HTMLTextAreaElement;
+            try {
+              const parsedData = JSON.parse(textarea.value);
+              this._updateWidgetConfig(widget.id, 'config.chartData', parsedData);
+            } catch (error) {
+              // Invalid JSON, don't update
+              console.warn('Invalid JSON for chart data');
+            }
+          }}"
+          placeholder='{"type": "bar", "labels": [...], "datasets": [...]}'
+        ></textarea>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Quick Presets</label>
+        <button
+          class="toolbar-button"
+          style="width: 100%; margin-bottom: 8px;"
+          @click="${() => {
+            const sampleData: ChartData = {
+              type: chartType as any,
+              labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+              datasets: [{
+                label: 'Sales',
+                data: [12, 19, 3, 5, 2, 3],
+                backgroundColor: '#2196F3',
+                borderColor: '#1976D2'
+              }]
+            };
+            this._updateWidgetConfig(widget.id, 'config.chartData', sampleData);
+          }}"
+        >
+          📊 Load Sample Data
+        </button>
+        <button
+          class="toolbar-button"
+          style="width: 100%; margin-bottom: 8px;"
+          @click="${() => {
+            const multiSeriesData: ChartData = {
+              type: chartType as any,
+              labels: ['Q1', 'Q2', 'Q3', 'Q4'],
+              datasets: [
+                {
+                  label: 'Product A',
+                  data: [30, 45, 60, 55],
+                  backgroundColor: '#2196F3',
+                  borderColor: '#1976D2'
+                },
+                {
+                  label: 'Product B',
+                  data: [20, 35, 40, 50],
+                  backgroundColor: '#4CAF50',
+                  borderColor: '#388E3C'
+                }
+              ]
+            };
+            this._updateWidgetConfig(widget.id, 'config.chartData', multiSeriesData);
+          }}"
+        >
+          📈 Multi-Series Data
+        </button>
+      </div>
+    `;
+  }
+
+  private _renderTextWidgetProperties(widget: DashboardWidget) {
+    if (widget.config.type !== 'text') return html``;
+    const config: TextWidgetConfig = widget.config.config || {} as TextWidgetConfig;
+
+    return html`
+      <div class="property-group">
+        <label class="property-label">Text Content</label>
+        <textarea
+          class="property-textarea"
+          .value="${config.content || ''}"
+          @input="${(e: Event) => {
+            const textarea = e.target as HTMLTextAreaElement;
+            this._updateWidgetConfig(widget.id, 'config.config.content', textarea.value);
+          }}"
+        ></textarea>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Font Size (px)</label>
+        <input
+          type="number"
+          class="property-input property-number"
+          .value="${config.fontSize || 16}"
+          @input="${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            this._updateWidgetConfig(widget.id, 'config.config.fontSize', parseInt(input.value));
+          }}"
+        />
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Font Weight</label>
+        <select
+          class="property-select"
+          .value="${config.fontWeight || 'normal'}"
+          @change="${(e: Event) => {
+            const select = e.target as HTMLSelectElement;
+            this._updateWidgetConfig(widget.id, 'config.config.fontWeight', select.value);
+          }}"
+        >
+          <option value="normal">Normal</option>
+          <option value="bold">Bold</option>
+          <option value="bolder">Bolder</option>
+          <option value="lighter">Lighter</option>
+        </select>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Text Align</label>
+        <select
+          class="property-select"
+          .value="${config.textAlign || 'left'}"
+          @change="${(e: Event) => {
+            const select = e.target as HTMLSelectElement;
+            this._updateWidgetConfig(widget.id, 'config.config.textAlign', select.value);
+          }}"
+        >
+          <option value="left">Left</option>
+          <option value="center">Center</option>
+          <option value="right">Right</option>
+          <option value="justify">Justify</option>
+        </select>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Text Color</label>
+        <input
+          type="color"
+          class="property-input property-color"
+          .value="${config.color || '#1a1a1a'}"
+          @input="${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            this._updateWidgetConfig(widget.id, 'config.config.color', input.value);
+          }}"
+        />
+      </div>
+    `;
+  }
+
+  private _renderImageWidgetProperties(widget: DashboardWidget) {
+    if (widget.config.type !== 'image') return html``;
+    const config: ImageWidgetConfig = widget.config.config || {} as ImageWidgetConfig;
+
+    return html`
+      <div class="property-group">
+        <label class="property-label">Image URL</label>
+        <input
+          type="text"
+          class="property-input"
+          .value="${config.src || ''}"
+          @input="${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            this._updateWidgetConfig(widget.id, 'config.config.src', input.value);
+          }}"
+          placeholder="https://example.com/image.jpg"
+        />
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Alt Text</label>
+        <input
+          type="text"
+          class="property-input"
+          .value="${config.alt || ''}"
+          @input="${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            this._updateWidgetConfig(widget.id, 'config.config.alt', input.value);
+          }}"
+          placeholder="Image description"
+        />
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Image Fit</label>
+        <select
+          class="property-select"
+          .value="${config.fit || 'contain'}"
+          @change="${(e: Event) => {
+            const select = e.target as HTMLSelectElement;
+            this._updateWidgetConfig(widget.id, 'config.config.fit', select.value);
+          }}"
+        >
+          <option value="contain">Contain</option>
+          <option value="cover">Cover</option>
+          <option value="fill">Fill</option>
+          <option value="none">None</option>
+          <option value="scale-down">Scale Down</option>
+        </select>
+      </div>
+
+      <div class="property-group">
+        <label class="property-label">Link URL (optional)</label>
+        <input
+          type="text"
+          class="property-input"
+          .value="${config.link || ''}"
+          @input="${(e: Event) => {
+            const input = e.target as HTMLInputElement;
+            this._updateWidgetConfig(widget.id, 'config.config.link', input.value);
+          }}"
+          placeholder="https://example.com"
+        />
+      </div>
+    `;
+  }
+
+  private _renderMarkdownWidgetProperties(widget: DashboardWidget) {
+    if (widget.config.type !== 'markdown') return html``;
+    const config: MarkdownWidgetConfig = widget.config.config || {} as MarkdownWidgetConfig;
+
+    return html`
+      <div class="property-group">
+        <label class="property-label">Markdown Content</label>
+        <textarea
+          class="property-textarea"
+          style="min-height: 200px;"
+          .value="${config.content || ''}"
+          @input="${(e: Event) => {
+            const textarea = e.target as HTMLTextAreaElement;
+            this._updateWidgetConfig(widget.id, 'config.config.content', textarea.value);
+          }}"
+          placeholder="# Heading&#10;&#10;Your markdown content here..."
+        ></textarea>
+      </div>
+    `;
+  }
+
   render() {
     return html`
       <div class="editor-container">
@@ -1078,6 +1960,8 @@ export class DashboardEditorComponent extends LitElement {
           ${this._renderToolbar()}
           ${this._renderCanvas()}
         </div>
+
+        ${this._renderPropertiesPanel()}
       </div>
     `;
   }

@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chart Widget Editor Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f5f5f5;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        .test-header h1 {
+            margin: 0 0 10px 0;
+            font-size: 2rem;
+        }
+        .test-header p {
+            margin: 0;
+            opacity: 0.9;
+        }
+        .instructions {
+            background: white;
+            margin: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .instructions h2 {
+            margin-top: 0;
+            color: #667eea;
+        }
+        .instructions ul {
+            line-height: 1.8;
+        }
+        .instructions code {
+            background: #f5f5f5;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        dashboard-editor {
+            display: block;
+            height: calc(100vh - 200px);
+        }
+    </style>
+</head>
+<body>
+    <div class="test-header">
+        <h1>📊 Chart Widget Editor Test</h1>
+        <p>Test the chart widget implementation in the dashboard editor</p>
+    </div>
+
+    <div class="instructions">
+        <h2>🎯 Test Instructions</h2>
+        <ul>
+            <li><strong>Step 1:</strong> Drag the <code>Chart</code> widget from the left sidebar onto the canvas</li>
+            <li><strong>Step 2:</strong> Click on the chart widget to select it</li>
+            <li><strong>Step 3:</strong> Use the properties panel on the right to:
+                <ul>
+                    <li>Change the chart type (Bar, Line, Pie, etc.)</li>
+                    <li>Edit the chart data JSON</li>
+                    <li>Try the quick preset buttons</li>
+                </ul>
+            </li>
+            <li><strong>Step 4:</strong> Verify the chart renders correctly with different types and data</li>
+            <li><strong>Step 5:</strong> Test resizing and moving the chart widget</li>
+        </ul>
+    </div>
+
+    <dashboard-editor></dashboard-editor>
+
+    <script type="module" src="dist/dashboard-editor-component.js"></script>
+    <script>
+        console.log('Chart Widget Editor Test Page Loaded');
+        
+        // Wait for the component to be defined
+        customElements.whenDefined('dashboard-editor').then(() => {
+            console.log('✓ Dashboard editor component is ready');
+        });
+
+        // Check if chart widget is registered
+        customElements.whenDefined('chart-widget').then(() => {
+            console.log('✓ Chart widget component is ready');
+        });
+    </script>
+</body>
+</html>
+
