@@ -15,7 +15,11 @@ lazy val root = (project in file("."))
       "dev.zio" %% "zio-schema-derivation" % "1.7.5",
       "dev.zio" %% "zio-schema-json" % "1.7.5",
       "dev.zio" %% "zio-test" % "2.1.22" % Test,
-      "dev.zio" %% "zio-test-sbt" % "2.1.22" % Test
+      "dev.zio" %% "zio-test-sbt" % "2.1.22" % Test,
+      "com.augustnagro" %% "magnumzio" % "2.0.0-M2",
+      "org.postgresql" % "postgresql" % "42.7.8",
+      "com.zaxxer" % "HikariCP" % "7.0.2"
     ),
-    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework")
+    testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
+    run / fork := true
   )

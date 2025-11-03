@@ -1,5 +1,6 @@
 package com.simpleset
 
+import com.simpleset.dashboard.{Backend, DashboardVersion, DashboardVersionList, InMemoryBackend}
 import zio.*
 import zio.http.*
 import zio.http.codec.*
@@ -140,7 +141,7 @@ object Main extends ZIOAppDefault:
   private val port = 8080
 
   // Main application
-  def run =
+  def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
     for
       _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
 

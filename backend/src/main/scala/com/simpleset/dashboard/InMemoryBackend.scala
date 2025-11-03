@@ -1,8 +1,8 @@
-package com.simpleset
+package com.simpleset.dashboard
 
 import zio.*
-import zio.stm.*
 import zio.json.ast.Json
+import zio.stm.*
 
 import java.time.Instant
 

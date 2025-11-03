@@ -1,4 +1,4 @@
-package com.simpleset
+package com.simpleset.dashboard
 
 import zio.*
 import zio.json.ast.Json
