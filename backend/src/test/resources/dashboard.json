@@ -1,0 +1,521 @@
+{
+  "id": "dash-003",
+  "name": "Executive Analytics Dashboard with Embedded Charts",
+  "description": "Comprehensive executive dashboard with embedded chart configurations, data bindings, and multiple layout types",
+  "slug": "executive-analytics-embedded",
+  "layout": {
+    "type": "freeform",
+    "columns": 16,
+    "rowHeight": 60,
+    "margin": [8, 8],
+    "containerPadding": [12, 12],
+    "compactType": null,
+    "preventCollision": true,
+    "useCSSTransforms": true,
+    "resizeHandles": ["s", "w", "e", "n", "se", "sw", "ne", "nw"]
+  },
+  "theme": {
+    "name": "executive-light",
+    "backgroundColor": "#fafbfc",
+    "textColor": "#1c2127",
+    "primaryColor": "#137cbd",
+    "secondaryColor": "#0f9960",
+    "accentColor": "#d9822b",
+    "fontFamily": "Helvetica Neue, Arial, sans-serif",
+    "borderRadius": 6,
+    "spacing": 12
+  },
+  "widgets": [
+    {
+      "id": "widget-text-header",
+      "title": null,
+      "position": {
+        "x": 0,
+        "y": 0,
+        "width": 16,
+        "height": 1,
+        "static": true
+      },
+      "style": {
+        "backgroundColor": "#137cbd",
+        "borderWidth": 0,
+        "borderRadius": 6,
+        "padding": 24,
+        "margin": 4,
+        "shadow": false,
+        "opacity": 1
+      },
+      "config": {
+        "type": "text",
+        "config": {
+          "content": "Executive Dashboard - Q4 2024 Performance Overview",
+          "fontSize": 28,
+          "fontWeight": "bold",
+          "textAlign": "center",
+          "color": "#ffffff"
+        }
+      },
+      "visible": true
+    },
+    {
+      "id": "widget-embedded-chart-001",
+      "title": "Revenue Trends - Multi-Series Line Chart",
+      "position": {
+        "x": 0,
+        "y": 1,
+        "width": 10,
+        "height": 5,
+        "minWidth": 6,
+        "minHeight": 4
+      },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#d8e1e8",
+        "borderWidth": 1,
+        "borderRadius": 6,
+        "padding": 20,
+        "margin": 4,
+        "shadow": true,
+        "opacity": 1
+      },
+      "config": {
+        "type": "chart"
+      },
+      "visible": true,
+      "refreshConfig": {
+        "enabled": true,
+        "interval": 600
+      },
+      "chartConfig": {
+        "id": "chart-001",
+        "name": "Revenue Trends",
+        "type": "line",
+        "config": {
+          "title": {
+            "text": "Monthly Revenue Trends",
+            "subtext": "Actual vs Target vs Previous Year",
+            "left": "center",
+            "top": 10,
+            "textStyle": {
+              "color": "#1c2127",
+              "fontSize": 16,
+              "fontWeight": "bold"
+            }
+          },
+          "legend": {
+            "data": ["Actual Revenue", "Target Revenue", "Previous Year"],
+            "top": 40,
+            "left": "center"
+          },
+          "tooltip": {
+            "trigger": "axis",
+            "axisPointer": {
+              "type": "cross"
+            }
+          },
+          "grid": {
+            "left": "5%",
+            "right": "5%",
+            "bottom": "10%",
+            "top": "25%",
+            "containLabel": true
+          },
+          "xAxis": {
+            "type": "category",
+            "boundaryGap": false,
+            "data": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+          },
+          "yAxis": {
+            "type": "value",
+            "name": "Revenue ($M)",
+            "axisLabel": {
+              "formatter": "${value}M"
+            }
+          },
+          "series": [
+            {
+              "name": "Actual Revenue",
+              "type": "line",
+              "data": [1.2, 1.5, 1.8, 2.1, 2.3, 2.6, 2.8, 3.1, 3.4, 3.7, 4.0, 4.2],
+              "smooth": true,
+              "color": "#137cbd",
+              "lineStyle": {
+                "width": 3
+              },
+              "areaStyle": {
+                "color": "#137cbd",
+                "opacity": 0.2
+              }
+            },
+            {
+              "name": "Target Revenue",
+              "type": "line",
+              "data": [1.0, 1.4, 1.7, 2.0, 2.2, 2.5, 2.7, 3.0, 3.2, 3.5, 3.8, 4.0],
+              "smooth": true,
+              "color": "#0f9960",
+              "lineStyle": {
+                "width": 2,
+                "type": "dashed"
+              }
+            },
+            {
+              "name": "Previous Year",
+              "type": "line",
+              "data": [0.9, 1.1, 1.3, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2],
+              "smooth": true,
+              "color": "#d9822b",
+              "lineStyle": {
+                "width": 2,
+                "type": "dotted"
+              }
+            }
+          ]
+        },
+        "dataBinding": {
+          "dataSourceId": "ds-001",
+          "sql": "SELECT month, actual_revenue, target_revenue, previous_year_revenue FROM monthly_revenue WHERE year = {{year}} AND region IN ({{regions}})",
+          "parameters": {
+            "year": 2024,
+            "regions": ["NA", "EU", "APAC"]
+          },
+          "xAxisColumn": "month",
+          "yAxisColumns": ["actual_revenue", "target_revenue", "previous_year_revenue"],
+          "limit": 12
+        }
+      }
+    },
+    {
+      "id": "widget-embedded-chart-002",
+      "title": "Market Share - Doughnut Chart",
+      "position": {
+        "x": 10,
+        "y": 1,
+        "width": 6,
+        "height": 5,
+        "minWidth": 4,
+        "minHeight": 4
+      },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#d8e1e8",
+        "borderWidth": 1,
+        "borderRadius": 6,
+        "padding": 20,
+        "margin": 4,
+        "shadow": true,
+        "opacity": 1
+      },
+      "config": {
+        "type": "chart"
+      },
+      "visible": true,
+      "chartConfig": {
+        "id": "chart-002",
+        "name": "Market Share Distribution",
+        "type": "doughnut",
+        "config": {
+          "title": {
+            "text": "Market Share by Product Line",
+            "left": "center",
+            "top": 10,
+            "textStyle": {
+              "fontSize": 14,
+              "fontWeight": "bold"
+            }
+          },
+          "tooltip": {
+            "trigger": "item",
+            "formatter": "{b}: {c}% ({d}%)"
+          },
+          "legend": {
+            "orient": "vertical",
+            "left": "left",
+            "top": "middle"
+          },
+          "series": [
+            {
+              "name": "Market Share",
+              "type": "pie",
+              "radius": ["40%", "70%"],
+              "center": ["60%", "55%"],
+              "data": [
+                { "value": 35, "name": "Enterprise Solutions", "itemStyle": { "color": "#137cbd" } },
+                { "value": 28, "name": "Cloud Services", "itemStyle": { "color": "#0f9960" } },
+                { "value": 22, "name": "Analytics Platform", "itemStyle": { "color": "#d9822b" } },
+                { "value": 15, "name": "Mobile Apps", "itemStyle": { "color": "#db3737" } }
+              ],
+              "emphasis": {
+                "itemStyle": {
+                  "shadowBlur": 10,
+                  "shadowOffsetX": 0,
+                  "shadowColor": "rgba(0, 0, 0, 0.5)"
+                }
+              },
+              "label": {
+                "formatter": "{b}\n{d}%"
+              }
+            }
+          ]
+        },
+        "dataBinding": {
+          "dataSourceId": "ds-001",
+          "sql": "SELECT product_line, market_share_percentage FROM market_share WHERE quarter = {{quarter}}",
+          "parameters": {
+            "quarter": "Q4-2024"
+          },
+          "groupByColumn": "product_line",
+          "aggregation": "sum"
+        }
+      }
+    },
+    {
+      "id": "widget-embedded-chart-003",
+      "title": "Regional Performance - Stacked Bar",
+      "position": {
+        "x": 0,
+        "y": 6,
+        "width": 8,
+        "height": 5,
+        "minWidth": 6,
+        "minHeight": 4
+      },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#d8e1e8",
+        "borderWidth": 1,
+        "borderRadius": 6,
+        "padding": 20,
+        "margin": 4,
+        "shadow": true,
+        "opacity": 1
+      },
+      "config": {
+        "type": "chart"
+      },
+      "visible": true,
+      "chartConfig": {
+        "id": "chart-003",
+        "name": "Regional Performance",
+        "type": "stacked_bar",
+        "config": {
+          "title": {
+            "text": "Revenue by Region and Quarter",
+            "left": "center"
+          },
+          "tooltip": {
+            "trigger": "axis",
+            "axisPointer": {
+              "type": "shadow"
+            }
+          },
+          "legend": {
+            "data": ["Q1", "Q2", "Q3", "Q4"],
+            "top": 30
+          },
+          "grid": {
+            "left": "3%",
+            "right": "4%",
+            "bottom": "3%",
+            "top": "20%",
+            "containLabel": true
+          },
+          "xAxis": {
+            "type": "value",
+            "name": "Revenue ($M)"
+          },
+          "yAxis": {
+            "type": "category",
+            "data": ["North America", "Europe", "Asia Pacific", "Latin America", "MEA"]
+          },
+          "series": [
+            {
+              "name": "Q1",
+              "type": "bar",
+              "stack": "total",
+              "data": [3.2, 2.8, 2.1, 1.2, 0.8],
+              "color": "#137cbd"
+            },
+            {
+              "name": "Q2",
+              "type": "bar",
+              "stack": "total",
+              "data": [3.5, 3.0, 2.4, 1.4, 0.9],
+              "color": "#0f9960"
+            },
+            {
+              "name": "Q3",
+              "type": "bar",
+              "stack": "total",
+              "data": [3.8, 3.2, 2.6, 1.5, 1.0],
+              "color": "#d9822b"
+            },
+            {
+              "name": "Q4",
+              "type": "bar",
+              "stack": "total",
+              "data": [4.2, 3.5, 2.9, 1.7, 1.2],
+              "color": "#9179f2"
+            }
+          ]
+        },
+        "dataBinding": {
+          "dataSourceId": "ds-001",
+          "sql": "SELECT region, quarter, SUM(revenue) as total_revenue FROM regional_sales WHERE year = {{year}} GROUP BY region, quarter ORDER BY region",
+          "parameters": {
+            "year": 2024
+          },
+          "xAxisColumn": "region",
+          "yAxisColumns": ["total_revenue"],
+          "groupByColumn": "quarter",
+          "aggregation": "sum"
+        }
+      }
+    },
+    {
+      "id": "widget-embedded-chart-004",
+      "title": "Customer Satisfaction - Radar",
+      "position": {
+        "x": 8,
+        "y": 6,
+        "width": 8,
+        "height": 5,
+        "minWidth": 6,
+        "minHeight": 4
+      },
+      "style": {
+        "backgroundColor": "#ffffff",
+        "borderColor": "#d8e1e8",
+        "borderWidth": 1,
+        "borderRadius": 6,
+        "padding": 20,
+        "margin": 4,
+        "shadow": true,
+        "opacity": 1
+      },
+      "config": {
+        "type": "chart"
+      },
+      "visible": true,
+      "chartConfig": {
+        "id": "chart-004",
+        "name": "Customer Satisfaction Metrics",
+        "type": "radar",
+        "config": {
+          "title": {
+            "text": "Customer Satisfaction Across Dimensions",
+            "left": "center"
+          },
+          "legend": {
+            "data": ["Current Quarter", "Previous Quarter", "Industry Average"],
+            "top": 30
+          },
+          "radar": {
+            "indicator": [
+              { "name": "Product Quality", "max": 100 },
+              { "name": "Customer Service", "max": 100 },
+              { "name": "Value for Money", "max": 100 },
+              { "name": "Ease of Use", "max": 100 },
+              { "name": "Innovation", "max": 100 },
+              { "name": "Support", "max": 100 }
+            ],
+            "center": ["50%", "60%"],
+            "radius": "60%"
+          },
+          "series": [
+            {
+              "name": "Satisfaction Metrics",
+              "type": "radar",
+              "data": [
+                {
+                  "value": [92, 88, 85, 90, 87, 89],
+                  "name": "Current Quarter",
+                  "areaStyle": {
+                    "color": "#137cbd",
+                    "opacity": 0.3
+                  },
+                  "lineStyle": {
+                    "color": "#137cbd",
+                    "width": 2
+                  }
+                },
+                {
+                  "value": [88, 85, 82, 87, 84, 86],
+                  "name": "Previous Quarter",
+                  "areaStyle": {
+                    "color": "#0f9960",
+                    "opacity": 0.2
+                  },
+                  "lineStyle": {
+                    "color": "#0f9960",
+                    "width": 2,
+                    "type": "dashed"
+                  }
+                },
+                {
+                  "value": [85, 83, 80, 84, 82, 83],
+                  "name": "Industry Average",
+                  "areaStyle": {
+                    "color": "#d9822b",
+                    "opacity": 0.1
+                  },
+                  "lineStyle": {
+                    "color": "#d9822b",
+                    "width": 1,
+                    "type": "dotted"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "dataBinding": {
+          "dataSourceId": "ds-002",
+          "sql": "SELECT dimension, current_score, previous_score, industry_avg FROM satisfaction_metrics WHERE period = {{period}}",
+          "parameters": {
+            "period": "Q4-2024"
+          }
+        }
+      }
+    }
+  ],
+  "parameters": [
+    {
+      "name": "year",
+      "type": "number",
+      "defaultValue": 2024,
+      "required": true,
+      "description": "Fiscal year for analysis"
+    },
+    {
+      "name": "quarter",
+      "type": "string",
+      "defaultValue": "Q4-2024",
+      "required": true,
+      "description": "Quarter for detailed analysis"
+    },
+    {
+      "name": "regions",
+      "type": "string",
+      "defaultValue": ["NA", "EU", "APAC", "LATAM", "MEA"],
+      "required": false,
+      "description": "Regions to include in analysis"
+    }
+  ],
+  "tags": ["executive", "analytics", "performance", "quarterly-review"],
+  "favorite": true,
+  "published": true,
+  "sharing": {
+    "isPublic": false,
+    "allowedUsers": ["exec-001", "exec-002", "exec-003"],
+    "allowedRoles": ["executive", "c-level", "board"]
+  },
+  "audit": {
+    "createdAt": "2024-03-01T09:00:00Z",
+    "createdBy": "exec-001",
+    "updatedAt": "2024-11-20T15:00:00Z",
+    "updatedBy": "exec-001"
+  },
+  "viewCount": 2156,
+  "lastViewed": "2024-11-20T14:30:00Z"
+}
+
