@@ -1,6 +1,7 @@
 package com.simpleset
 
-import com.simpleset.dashboard.{Backend, DashboardVersion, DashboardVersionList, InMemoryBackend}
+import com.simpleset.dashboard.{Backend, InMemoryBackend}
+import com.simpleset.model.{DashboardVersion, DashboardVersionList}
 import zio.*
 import zio.http.*
 import zio.http.codec.*
@@ -14,22 +15,17 @@ import zio.schema.annotation.description
 
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.time.Instant
-
-// Schema definitions for OpenAPI
-given Schema[Instant] = Schema.primitive[String].transform(
-  str => Instant.parse(str),
-  instant => instant.toString
-)
-
-// Use a dynamic schema for Json that accepts any JSON structure
-given Schema[Json] = Schema.defer(Schema.dynamicValue.transform(
-  dv => Json.Null, // This is a placeholder, actual conversion happens via codec
-  json => zio.schema.DynamicValue.fromSchemaAndValue(Schema[String], json.toString)
-))
-
-given Schema[DashboardVersionList] = DeriveSchema.gen[DashboardVersionList]
-given Schema[DashboardVersion] = DeriveSchema.gen[DashboardVersion]
+//// Schema definitions for OpenAPI
+//given Schema[Instant] = Schema.primitive[String].transform(
+//  str => Instant.parse(str),
+//  instant => instant.toString
+//)
+//
+//// Use a dynamic schema for Json that accepts any JSON structure
+//given Schema[Json] = Schema.defer(Schema.dynamicValue.transform(
+//  dv => Json.Null, // This is a placeholder, actual conversion happens via codec
+//  json => zio.schema.DynamicValue.fromSchemaAndValue(Schema[String], json.toString)
+//))
 
 // Request/Response models for OpenAPI - use String for dashboard to avoid schema issues
 case class SaveDashboardRequest(
@@ -144,6 +140,7 @@ object Main extends ZIOAppDefault:
   def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
     for
       _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
+      _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
 
       // Create backend instance
       backend <- InMemoryBackend.make

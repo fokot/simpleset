@@ -2,6 +2,7 @@ package com.simpleset.dashboard
 
 import com.augustnagro.magnum.magzio.*
 import com.augustnagro.magnum.*
+import com.simpleset.model.{DashboardVersion, DashboardVersionList}
 import zio.*
 import zio.json.*
 import zio.json.ast.Json

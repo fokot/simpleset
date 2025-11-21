@@ -1,5 +1,6 @@
 package com.simpleset.dashboard
 
+import com.simpleset.model.{DashboardVersion, DashboardVersionList}
 import zio.*
 import zio.json.ast.Json
 import zio.stm.*
