@@ -8,11 +8,13 @@ Imagine if [Superset](https://superset.apache.org/) was re-invented with
   * Drop-in web component for any framework (React, Vue, and Angular etc.) or vanilla HTML
   * Hooks for enriching or transforming data after fetching
   * Easily extended backend with ability to load multiple data sources at once
+  * Custom dashboard interaction html events
 * Effortless query & dashboard management
   * Version history stored in a database or Git
 * Localization-ready
 * Robust row-level security
 * Fine-grained access rules per table
+* Metrics of dashboard usage (internal and OTEL)
 
 ## Project structure
 * .augment/rules - rules for LLMs
