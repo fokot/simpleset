@@ -696,7 +696,8 @@
         };
 
         // Functions to load different dashboard configurations
-        function loadAnalyticsDashboard() {
+        // Make these functions globally accessible for onclick handlers
+        window.loadAnalyticsDashboard = function() {
             updateActiveButton(0);
             const dashboard = document.getElementById('echarts-dashboard');
             console.log('Loading analytics dashboard...');
@@ -708,21 +709,21 @@
             console.log('Dashboard loaded!');
         }
 
-        function loadSalesDashboard() {
+        window.loadSalesDashboard = function() {
             updateActiveButton(1);
             const dashboard = document.getElementById('echarts-dashboard');
             dashboard.dashboard = salesDashboard;
             dashboard.data = salesData;
         }
 
-        function loadOperationsDashboard() {
+        window.loadOperationsDashboard = function() {
             updateActiveButton(2);
             const dashboard = document.getElementById('echarts-dashboard');
             dashboard.dashboard = operationsDashboard;
             dashboard.data = operationsData;
         }
 
-        function loadFinancialDashboard() {
+        window.loadFinancialDashboard = function() {
             updateActiveButton(3);
             const dashboard = document.getElementById('echarts-dashboard');
             dashboard.dashboard = financialDashboard;
