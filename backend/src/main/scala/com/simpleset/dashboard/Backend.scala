@@ -33,4 +33,7 @@ trait Backend {
       ds <- DataSource.get(dataBinding.dataSourceId)
       data <- ds.getData(dataBinding, Map.empty)
     } yield data
+
+
+  // FIXME add typed api to edit data sources according to zod definitions
 }

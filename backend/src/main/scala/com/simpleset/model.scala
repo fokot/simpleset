@@ -36,7 +36,8 @@ object model {
   def findDataBindings(json: Json): List[Chart] =
     json.foldDown(List.empty)((acc, json) =>
       json match {
-        case obj: Json.Obj if obj.contains("dataBinding") =>
+        case Json.Obj(fields) if fields.exists(_._1 == "dataBinding") =>
+          // Only try to decode if it's an object with a dataBinding field
           acc ++ json.as[Chart].toOption
         case _ =>
           acc

@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard with Backend Data Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        .demo-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .demo-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #1a1a1a;
+        }
+        
+        .demo-subtitle {
+            font-size: 1.1rem;
+            color: #666;
+            margin: 0;
+        }
+        
+        .dashboard-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-height: 600px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #f44336;
+            font-size: 1.1rem;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            margin-left: 10px;
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+            color: white;
+        }
+
+        .status-indicator.success {
+            background: #4caf50;
+            color: white;
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="index.html" class="back-link">← Back to All Demos</a>
+
+        <div class="demo-header">
+            <h1 class="demo-title">Dashboard with Backend Data Demo</h1>
+            <p class="demo-subtitle">
+                Interactive dashboard loading data from backend API
+                <span id="status-indicator" class="status-indicator loading">Loading...</span>
+            </p>
+        </div>
+        
+        <div class="dashboard-wrapper">
+            <div id="loading-message" class="loading">Loading dashboard...</div>
+            <div id="error-message" class="error" style="display: none;"></div>
+            <dashboard-component id="demo-dashboard" style="display: none;"></dashboard-component>
+        </div>
+    </div>
+
+    <script type="module" src="dist/dashboard-component.js"></script>
+    <script>
+        const API_BASE_URL = 'http://localhost:8080';
+
+        // Sample dashboard configuration (same structure as original)
+        const sampleDashboard = {
+            id: "demo-dashboard-1",
+            name: "Sales Performance Dashboard",
+            description: "Comprehensive view of sales metrics, performance data, and key indicators",
+            layout: {
+                type: "grid",
+                columns: 12,
+                rowHeight: 100,
+                margin: [16, 16],
+                containerPadding: [20, 20]
+            },
+            theme: {
+                name: "modern",
+                backgroundColor: "#ffffff",
+                textColor: "#1a1a1a",
+                primaryColor: "#2196f3",
+                secondaryColor: "#4caf50",
+                accentColor: "#ff9800",
+                fontFamily: "Inter, system-ui, sans-serif",
+                borderRadius: 8,
+                spacing: 16
+            },
+            widgets: [
+                {
+                    id: "revenue-metric",
+                    title: "Total Revenue",
+                    position: { x: 0, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Total Revenue",
+                            value: 125000,
+                            format: "currency",
+                            prefix: "$",
+                            trend: {
+                                value: 12.5,
+                                direction: "up",
+                                color: "#4caf50"
+                            },
+                            target: 150000,
+                            thresholds: [
+                                { value: 50000, color: "#f44336", label: "Low" },
+                                { value: 100000, color: "#ff9800", label: "Medium" },
+                                { value: 150000, color: "#4caf50", label: "High" }
+                            ]
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "conversion-metric",
+                    title: "Conversion Rate",
+                    position: { x: 3, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Conversion Rate",
+                            value: 0.034,
+                            format: "%",
+                            suffix: "%",
+                            trend: {
+                                value: 2.1,
+                                direction: "up",
+                                color: "#4caf50"
+                            },
+                            target: 0.05
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "customers-metric",
+                    title: "Active Customers",
+                    position: { x: 6, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Active Customers",
+                            value: 1247,
+                            format: ",",
+                            trend: {
+                                value: 8.3,
+                                direction: "up",
+                                color: "#4caf50"
+                            }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "orders-metric",
+                    title: "Orders Today",
+                    position: { x: 9, y: 0, width: 3, height: 2 },
+                    config: {
+                        type: "metric",
+                        config: {
+                            title: "Orders Today",
+                            value: 89,
+                            trend: {
+                                value: 5.2,
+                                direction: "down",
+                                color: "#f44336"
+                            }
+                        }
+                    },
+                    visible: true
+                },
+                {
+                    id: "sales-chart",
+                    title: "Monthly Sales Trend",
+                    position: { x: 0, y: 2, width: 8, height: 3 },
+                    config: {
+                        type: "chart"
+                    },
+                    visible: true
+                },
+              {
+                id: "top-products",
+                title: "Top Products",
+                position: {x: 8, y: 2, width: 4, height: 3},
+                config: {
+                  type: "table",
+                  config: {
+                    columns: [
+                      {key: "product", title: "Product", align: "left", sortable: true},
+                      {key: "sales", title: "Sales", align: "right", sortable: true, format: "currency"},
+                      {key: "growth", title: "Growth", align: "right", sortable: true, format: "%"}
+                    ],
+                    pagination: {
+                      enabled: true,
+                      pageSize: 5
+                    }
+                  }
+                }
+              },
+                {
+                    id: "recent-orders",
+                    title: "Recent Orders",
+                    position: { x: 0, y: 5, width: 12, height: 3 },
+                    config: {
+                        type: "table",
+                        config: {
+                            columns: [
+                                { key: "orderId", title: "Order ID", align: "left", sortable: true },
+                                { key: "customer", title: "Customer", align: "left", sortable: true },
+                                { key: "amount", title: "Amount", align: "right", sortable: true, format: "currency" },
+                                { key: "status", title: "Status", align: "center", sortable: true },
+                                { key: "date", title: "Date", align: "left", sortable: true }
+                            ],
+                            pagination: {
+                                enabled: true,
+                                pageSize: 8
+                            },
+                            striped: true,
+                            bordered: true,
+                            hoverable: true
+                        }
+                    },
+                    visible: true
+                }
+            ],
+            tags: ["sales", "performance", "demo"],
+            sharing: { isPublic: false, allowedUsers: [] },
+            audit: {
+                createdAt: new Date().toISOString(),
+                createdBy: "demo-user",
+                updatedAt: new Date().toISOString(),
+                updatedBy: "demo-user"
+            }
+        };
+
+        // Fetch data from backend
+        async function fetchDashboardData(type) {
+            try {
+                updateStatus('loading', 'Loading data from backend...');
+                const response = await fetch(`${API_BASE_URL}/api/dashboard-data/${type}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                updateStatus('success', 'Data loaded successfully');
+                return data;
+            } catch (error) {
+                updateStatus('error', `Failed to load data: ${error.message}`);
+                showError(`Failed to load data from backend: ${error.message}`);
+                throw error;
+            }
+        }
+
+        // Update status indicator
+        function updateStatus(status, message) {
+            const indicator = document.getElementById('status-indicator');
+            indicator.className = `status-indicator ${status}`;
+            indicator.textContent = message;
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('error-message');
+            const loadingDiv = document.getElementById('loading-message');
+            const dashboard = document.getElementById('demo-dashboard');
+
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            loadingDiv.style.display = 'none';
+            dashboard.style.display = 'none';
+        }
+
+        // Hide error and loading messages
+        function hideMessages() {
+            const errorDiv = document.getElementById('error-message');
+            const loadingDiv = document.getElementById('loading-message');
+            const dashboard = document.getElementById('demo-dashboard');
+
+            errorDiv.style.display = 'none';
+            loadingDiv.style.display = 'none';
+            dashboard.style.display = 'block';
+        }
+
+        // Load dashboard function
+        async function loadSampleDashboard() {
+            try {
+                const data = await fetchDashboardData('sample');
+                const dashboard = document.getElementById('demo-dashboard');
+                dashboard.dashboard = sampleDashboard;
+                dashboard.data = data;
+                hideMessages();
+            } catch (error) {
+                console.error('Error loading sample dashboard:', error);
+            }
+        }
+
+        // Load the sample dashboard by default
+        window.addEventListener('load', () => {
+            loadSampleDashboard();
+        });
+    </script>
+</body>
+</html>
