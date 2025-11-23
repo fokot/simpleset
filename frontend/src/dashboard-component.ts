@@ -111,10 +111,25 @@ export class DashboardComponent extends LitElement {
   @property({ type: Object })
   data?: DashboardData;
 
+  @property({ type: String, attribute: 'backend-base-url' })
+  backendBaseUrl?: string;
+
   @state()
   private _errors: Map<string, string> = new Map();
 
+  @state()
+  private _loadedData: DashboardData = {};
+
+  @state()
+  private _isLoading: boolean = false;
+
   protected willUpdate(changedProperties: PropertyValues): void {
+    // If dashboard or backendBaseUrl changed, trigger data loading
+    if ((changedProperties.has('dashboard') || changedProperties.has('backendBaseUrl')) &&
+        !this.data && this.backendBaseUrl && this.dashboard) {
+      this._loadDataFromBackend();
+    }
+
     if (changedProperties.has('dashboard') || changedProperties.has('data')) {
       this._validateData();
     }
@@ -140,6 +155,109 @@ export class DashboardComponent extends LitElement {
     if (theme.spacing) style.setProperty('--dashboard-gap', `${theme.spacing}px`);
   }
 
+  private async _loadDataFromBackend(): Promise<void> {
+    if (!this.dashboard || !this.backendBaseUrl) return;
+
+    this._isLoading = true;
+    this._errors.clear();
+    this._loadedData = {};
+
+    try {
+      // Get all widgets that have dataBinding configuration
+      const widgetsWithDataBinding = this.dashboard.widgets?.filter(
+        widget => widget.config.type === 'chart' && widget.config.dataBinding
+      ) || [];
+
+      if (widgetsWithDataBinding.length === 0) {
+        this._isLoading = false;
+        return;
+      }
+
+      // Load data for all widgets in parallel
+      const dataPromises = widgetsWithDataBinding.map(widget =>
+        this._loadWidgetData(widget)
+      );
+
+      await Promise.all(dataPromises);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+      this._errors.set('data', `Failed to load dashboard data: ${error}`);
+    } finally {
+      this._isLoading = false;
+    }
+  }
+
+  private async _loadWidgetData(widget: DashboardWidget): Promise<void> {
+    if (widget.config.type !== 'chart' || !widget.config.dataBinding) return;
+
+    const { sql, dataSourceId } = widget.config.dataBinding;
+
+    if (!sql || !dataSourceId) {
+      console.warn(`Widget ${widget.id} has incomplete dataBinding configuration`);
+      return;
+    }
+
+    try {
+      const url = `${this.backendBaseUrl}/${this.dashboard!.id}/${widget.id}`;
+      console.log(`Fetching data for widget ${widget.id} from: ${url}`);
+
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ sql, dataSourceId })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const backendData = await response.json();
+      console.log(`Backend data received for ${widget.id}:`, backendData);
+
+      // Transform backend data to chart format
+      const chartData = this._transformBackendData(backendData);
+      if (chartData) {
+        this._loadedData[widget.id] = chartData;
+        this.requestUpdate(); // Trigger re-render
+      }
+    } catch (error) {
+      console.error(`Error loading data for widget ${widget.id}:`, error);
+      this._errors.set(widget.id, `Failed to load data: ${error}`);
+    }
+  }
+
+  private _transformBackendData(backendData: any): any {
+    if (!backendData || !backendData.data || !Array.isArray(backendData.data)) {
+      return null;
+    }
+
+    const data = backendData.data;
+    if (data.length === 0) return null;
+
+    // Get column names from the first row
+    const columns = Object.keys(data[0]);
+    if (columns.length === 0) return null;
+
+    // First column is typically the label/category
+    const labelColumn = columns[0];
+    const labels = data.map((row: any) => row[labelColumn]);
+
+    // Remaining columns are data series
+    const dataColumns = columns.slice(1);
+    const datasets = dataColumns.map(colName => ({
+      label: colName.charAt(0).toUpperCase() + colName.slice(1),
+      data: data.map((row: any) => row[colName])
+    }));
+
+    return {
+      type: 'bar', // Default type, can be customized
+      labels,
+      datasets
+    };
+  }
+
   private _validateData(): void {
     this._errors.clear();
 
@@ -148,8 +266,9 @@ export class DashboardComponent extends LitElement {
       return;
     }
 
-    if (!this.data) {
-      this._errors.set('data', 'Dashboard data is required');
+    // If data is not provided but backendBaseUrl is set, data will be loaded automatically
+    if (!this.data && !this.backendBaseUrl) {
+      this._errors.set('data', 'Either data or backendBaseUrl must be provided');
       return;
     }
 
@@ -164,10 +283,12 @@ export class DashboardComponent extends LitElement {
       return;
     }
 
-    // Validate each widget
-    this.dashboard.widgets.forEach(widget => {
-      this._validateWidget(widget);
-    });
+    // Only validate widgets if we have data (not loading from backend)
+    if (this.data) {
+      this.dashboard.widgets.forEach(widget => {
+        this._validateWidget(widget);
+      });
+    }
   }
 
   private _validateWidget(widget: DashboardWidget): void {
@@ -230,12 +351,13 @@ export class DashboardComponent extends LitElement {
   }
 
   private _renderWidget(widget: DashboardWidget) {
-    const widgetData = this.data?.[widget.id];
+    // Use provided data if available, otherwise use loaded data
+    const widgetData = this.data?.[widget.id] || this._loadedData[widget.id];
     const error = this._errors.get(widget.id);
 
     return html`
-      <div 
-        class="widget-container" 
+      <div
+        class="widget-container"
         style="${this._getWidgetGridStyle(widget)}"
       >
         ${widget.title ? html`
@@ -243,7 +365,7 @@ export class DashboardComponent extends LitElement {
             <h3 class="widget-title">${widget.title}</h3>
           </div>
         ` : ''}
-        
+
         <div class="widget-content">
           ${error ? html`
             <div class="error-message">${error}</div>
@@ -255,7 +377,8 @@ export class DashboardComponent extends LitElement {
 
   private _renderWidgetContent(widget: DashboardWidget, data: any) {
     if (!data) {
-      return html`<div class="loading-message">Loading...</div>`;
+      const loadingMessage = this._isLoading ? 'Loading data from backend...' : 'Loading...';
+      return html`<div class="loading-message">${loadingMessage}</div>`;
     }
 
     // Widget rendering will be implemented in the next step

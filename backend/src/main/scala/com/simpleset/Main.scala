@@ -195,6 +195,35 @@ object Main extends ZIOAppDefault:
     case _ => "{}"
   }
 
+  def generateChartData(request: ChartDataRequest): ChartDataResponse = {
+    // In a real implementation, you would execute the SQL query here
+    // For now, we'll just log the SQL and return fake data
+    request.sql.foreach(sql => println(s"Executing SQL: $sql"))
+
+    val data = List(
+      Map("month" -> "Jan", "sales" -> 4200, "revenue" -> 12500.50),
+      Map("month" -> "Feb", "sales" -> 5100, "revenue" -> 15200.75),
+      Map("month" -> "Mar", "sales" -> 4800, "revenue" -> 14100.25),
+      Map("month" -> "Apr", "sales" -> 6200, "revenue" -> 18500.00),
+      Map("month" -> "May", "sales" -> 7100, "revenue" -> 21300.50),
+      Map("month" -> "Jun", "sales" -> 6800, "revenue" -> 20400.75)
+    )
+
+    val columns = List(
+      Map("name" -> "month", "type" -> "string"),
+      Map("name" -> "sales", "type" -> "number"),
+      Map("name" -> "revenue", "type" -> "number")
+    )
+
+    ChartDataResponse(
+      data = data,
+      columns = columns,
+      totalRows = data.length,
+      executionTime = 0.125,
+      fromCache = false
+    )
+  }
+
   // Implement endpoints
   def routes(backend: Backend) =
     val getDashboardsRoute = getDashboardsEndpoint.implementHandler(
@@ -214,37 +243,18 @@ object Main extends ZIOAppDefault:
       }
     )
 
-    val getDashboardByNameRoute = getDashboardByNameEndpoint.implementHandler(
-      handler { (name: String) =>
-        val decodedName = URLDecoder.decode(name, StandardCharsets.UTF_8)
-        backend.getDashboard(decodedName)
-          .mapError(err => ErrorResponse(err.getMessage))
-      }
-    )
+  // JSON encoder for List[String]
+  given JsonEncoder[List[String]] = JsonEncoder.list[String]
 
-    val getDashboardByIdRoute = getDashboardByIdEndpoint.implementHandler(
-      handler { (id: Long) =>
-        backend.getDashboard(id)
-          .mapError(err => ErrorResponse(err.getMessage))
-      }
-    )
+  // Define the HTTP routes
+  val routes = Routes(
+    Method.GET / "dashboards" -> handler {
+      Response.json(dashboards.toJson)
+    }
+  )
 
-    val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
-      handler { (name: String) =>
-        ZIO.fromEither(getMockDashboardData(name).fromJson[Json])
-          .mapError(err => ErrorResponse(s"Invalid JSON: $err"))
-      }
-    )
-
-    Routes(
-      getDashboardsRoute,
-      saveDashboardRoute,
-      getDashboardByNameRoute,
-      getDashboardByIdRoute,
-      getDashboardDataRoute
-    )
-
-  private val port = 8080
+  // Create the HTTP app with CORS support
+  val httpApp = routes @@ Middleware.cors
 
   // Main application
   def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
@@ -279,7 +289,9 @@ object Main extends ZIOAppDefault:
       corsConfig = CorsConfig(
         allowedOrigin = _ => Some(AccessControlAllowOrigin.All)
       )
-      httpApp = allRoutes @@ cors(corsConfig)
+      // FIXME
+//      httpApp = allRoutes @@ cors(corsConfig)
+      httpApp = allRoutes @@ Middleware.cors
 
       _ <- Server.serve(httpApp).provide(Server.default)
     yield ()
