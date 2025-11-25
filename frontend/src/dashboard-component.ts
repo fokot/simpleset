@@ -202,11 +202,11 @@ export class DashboardComponent extends LitElement {
       console.log(`Fetching data for widget ${widget.id} from: ${url}`);
 
       const response = await fetch(url, {
-        method: 'POST',
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ sql, dataSourceId })
+        // body: JSON.stringify({ sql, dataSourceId })
       });
 
       if (!response.ok) {
