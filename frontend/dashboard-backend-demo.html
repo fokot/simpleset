@@ -150,215 +150,22 @@
 
         <div class="chart-info">
             <h3>🚀 Automatic Backend Integration</h3>
-            <p>This dashboard automatically loads data from the backend! Just set the <code>backend-base-url</code> attribute and configure <code>dataBinding</code> in your widgets.</p>
-            <p style="margin-top: 10px;"><strong>Endpoint:</strong> <code>GET /data/{dashboardId}/{chartId}</code></p>
+            <p>This dashboard automatically loads dashboard definitions and data from the backend! Just set the <code>backend-base-url</code> attribute.</p>
+            <p style="margin-top: 10px;"><strong>Dashboard Endpoint:</strong> <code>GET /dashboards/{name}</code></p>
+            <p style="margin-top: 5px; font-size: 0.85rem; color: #666;">Example: <code>GET /dashboards/analytics-dashboard</code></p>
+            <p style="margin-top: 10px;"><strong>Data Endpoint:</strong> <code>GET /data/{dashboardId}/{chartId}</code></p>
             <p style="margin-top: 5px; font-size: 0.85rem; color: #666;">Example: <code>GET /data/analytics-dashboard/traffic-trend-chart</code></p>
             <p style="margin-top: 5px; font-size: 0.85rem; color: #666;"><strong>No manual data fetching required!</strong> The component handles everything automatically.</p>
             <p id="debug-status" style="color: #667eea; font-weight: bold; margin-top: 10px;">Loading dashboard component...</p>
         </div>
 
-        <dashboard-component id="echarts-dashboard" backend-base-url="http://localhost:8080/data"></dashboard-component>
+        <dashboard-component id="echarts-dashboard" backend-base-url="http://localhost:8080" dashboard-name="analytics-dashboard"></dashboard-component>
     </div>
 </div>
 
 <script type="module">
   // Import the dashboard component
   import './dist/dashboard-component.js';
-
-  // Analytics Dashboard Configuration
-  const analyticsDashboard = {
-    id: "analytics-dashboard",
-    name: "Analytics Dashboard",
-    description: "Website traffic and user analytics",
-    layout: { type: "grid", columns: 12, rowHeight: 100 },
-    theme: {
-      name: "analytics",
-      backgroundColor: "#ffffff",
-      primaryColor: "#667eea",
-      secondaryColor: "#764ba2",
-      fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: 8,
-      spacing: 16
-    },
-    sharing: { isPublic: true, allowedUsers: [] },
-    audit: {
-      createdAt: new Date().toISOString(),
-      createdBy: "demo-user",
-      updatedAt: new Date().toISOString(),
-      updatedBy: "demo-user"
-    },
-    widgets: [
-      {
-        id: "traffic-trend-chart",
-        title: "Traffic Trend (Auto-Loaded)",
-        position: { x: 0, y: 0, width: 8, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = 2024",
-            dataSourceId: "analytics-db"
-          }
-        },
-        visible: true
-      },
-      {
-        id: "device-breakdown-chart",
-        title: "Device Breakdown (Auto-Loaded)",
-        position: { x: 8, y: 0, width: 4, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = 2024 LIMIT 3",
-            dataSourceId: "analytics-db"
-          }
-        },
-        visible: true
-      }
-    ]
-  };
-
-  // Sales Dashboard Configuration
-  const salesDashboard = {
-    id: "sales-dashboard",
-    name: "Sales Performance Dashboard",
-    description: "Sales metrics and revenue tracking",
-    layout: { type: "grid", columns: 12, rowHeight: 100 },
-    theme: {
-      name: "sales",
-      backgroundColor: "#ffffff",
-      primaryColor: "#4CAF50",
-      secondaryColor: "#2196F3",
-      fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: 8,
-      spacing: 16
-    },
-    sharing: { isPublic: true, allowedUsers: [] },
-    audit: {
-      createdAt: new Date().toISOString(),
-      createdBy: "demo-user",
-      updatedAt: new Date().toISOString(),
-      updatedBy: "demo-user"
-    },
-    widgets: [
-      {
-        id: "revenue-chart",
-        title: "Monthly Revenue (Auto-Loaded)",
-        position: { x: 0, y: 0, width: 6, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month, sales, revenue FROM monthly_data WHERE year = 2024",
-            dataSourceId: "sales-db"
-          }
-        },
-        visible: true
-      },
-      {
-        id: "sales-by-region-chart",
-        title: "Sales by Region (Auto-Loaded)",
-        position: { x: 6, y: 0, width: 6, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month AS region, sales FROM monthly_data WHERE year = 2024",
-            dataSourceId: "sales-db"
-          }
-        },
-        visible: true
-      }
-    ]
-  };
-
-  // Operations Dashboard Configuration
-  const operationsDashboard = {
-    id: "operations-dashboard",
-    name: "Operations Monitor",
-    description: "System performance and monitoring",
-    layout: { type: "grid", columns: 12, rowHeight: 100 },
-    theme: {
-      name: "operations",
-      backgroundColor: "#ffffff",
-      primaryColor: "#FF9800",
-      secondaryColor: "#F44336",
-      fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: 8,
-      spacing: 16
-    },
-    sharing: { isPublic: true, allowedUsers: [] },
-    audit: {
-      createdAt: new Date().toISOString(),
-      createdBy: "demo-user",
-      updatedAt: new Date().toISOString(),
-      updatedBy: "demo-user"
-    },
-    widgets: [
-      {
-        id: "server-load-chart",
-        title: "Server Load (Auto-Loaded)",
-        position: { x: 0, y: 0, width: 12, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month AS time, sales AS server1, revenue AS server2 FROM monthly_data WHERE year = 2024",
-            dataSourceId: "operations-db"
-          }
-        },
-        visible: true
-      }
-    ]
-  };
-
-  // Financial Dashboard Configuration
-  const financialDashboard = {
-    id: "financial-dashboard",
-    name: "Financial Overview",
-    description: "Financial metrics and reporting",
-    layout: { type: "grid", columns: 12, rowHeight: 100 },
-    theme: {
-      name: "financial",
-      backgroundColor: "#ffffff",
-      primaryColor: "#9C27B0",
-      secondaryColor: "#E91E63",
-      fontFamily: "Inter, system-ui, sans-serif",
-      borderRadius: 8,
-      spacing: 16
-    },
-    sharing: { isPublic: true, allowedUsers: [] },
-    audit: {
-      createdAt: new Date().toISOString(),
-      createdBy: "demo-user",
-      updatedAt: new Date().toISOString(),
-      updatedBy: "demo-user"
-    },
-    widgets: [
-      {
-        id: "profit-loss-chart",
-        title: "Profit & Loss (Auto-Loaded)",
-        position: { x: 0, y: 0, width: 8, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month AS quarter, sales AS revenue, revenue AS expenses FROM monthly_data WHERE year = 2024",
-            dataSourceId: "financial-db"
-          }
-        },
-        visible: true
-      },
-      {
-        id: "cash-flow-chart",
-        title: "Cash Flow (Auto-Loaded)",
-        position: { x: 8, y: 0, width: 4, height: 4 },
-        config: {
-          type: "chart",
-          dataBinding: {
-            sql: "SELECT month, revenue AS cashFlow FROM monthly_data WHERE year = 2024",
-            dataSourceId: "financial-db"
-          }
-        },
-        visible: true
-      }
-    ]
-  };
 
   // Helper function to update active button
   function updateActiveButton(index) {
@@ -379,10 +186,8 @@
     const debugStatus = document.getElementById('debug-status');
 
     console.log('Loading analytics dashboard...');
-    debugStatus.textContent = 'Loading analytics dashboard - data will be auto-loaded from backend...';
-
-    // Just set the dashboard configuration - data will be loaded automatically!
-    dashboard.dashboard = analyticsDashboard;
+    debugStatus.textContent = 'Loading analytics dashboard from backend...';
+    dashboard.dashboardName = 'analytics-dashboard';
   }
 
   function loadSalesDashboard() {
@@ -390,10 +195,8 @@
     const dashboard = document.getElementById('echarts-dashboard');
     const debugStatus = document.getElementById('debug-status');
 
-    debugStatus.textContent = 'Loading sales dashboard - data will be auto-loaded from backend...';
-
-    // Just set the dashboard configuration - data will be loaded automatically!
-    dashboard.dashboard = salesDashboard;
+    debugStatus.textContent = 'Loading sales dashboard from backend...';
+    dashboard.dashboardName = 'sales-dashboard';
   }
 
   function loadOperationsDashboard() {
@@ -401,10 +204,8 @@
     const dashboard = document.getElementById('echarts-dashboard');
     const debugStatus = document.getElementById('debug-status');
 
-    debugStatus.textContent = 'Loading operations dashboard - data will be auto-loaded from backend...';
-
-    // Just set the dashboard configuration - data will be loaded automatically!
-    dashboard.dashboard = operationsDashboard;
+    debugStatus.textContent = 'Loading operations dashboard from backend...';
+    dashboard.dashboardName = 'operations-dashboard';
   }
 
   function loadFinancialDashboard() {
@@ -412,10 +213,8 @@
     const dashboard = document.getElementById('echarts-dashboard');
     const debugStatus = document.getElementById('debug-status');
 
-    debugStatus.textContent = 'Loading financial dashboard - data will be auto-loaded from backend...';
-
-    // Just set the dashboard configuration - data will be loaded automatically!
-    dashboard.dashboard = financialDashboard;
+    debugStatus.textContent = 'Loading financial dashboard from backend...';
+    dashboard.dashboardName = 'financial-dashboard';
   }
 
   // Make functions available globally
@@ -427,7 +226,7 @@
   // Load analytics dashboard by default when component is ready
   customElements.whenDefined('dashboard-component').then(() => {
     console.log('Dashboard component loaded!');
-    loadAnalyticsDashboard();
+    updateActiveButton(0);
   });
 </script>
 </body>

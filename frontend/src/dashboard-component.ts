@@ -114,6 +114,9 @@ export class DashboardComponent extends LitElement {
   @property({ type: String, attribute: 'backend-base-url' })
   backendBaseUrl?: string;
 
+  @property({ type: String, attribute: 'dashboard-name' })
+  dashboardName?: string;
+
   @state()
   private _errors: Map<string, string> = new Map();
 
@@ -124,6 +127,11 @@ export class DashboardComponent extends LitElement {
   private _isLoading: boolean = false;
 
   protected willUpdate(changedProperties: PropertyValues): void {
+    // If dashboardName changed, load dashboard from backend
+    if (changedProperties.has('dashboardName') && this.dashboardName && this.backendBaseUrl) {
+      this._loadDashboardFromBackend();
+    }
+
     // If dashboard or backendBaseUrl changed, trigger data loading
     if ((changedProperties.has('dashboard') || changedProperties.has('backendBaseUrl')) &&
         !this.data && this.backendBaseUrl && this.dashboard) {
@@ -153,6 +161,29 @@ export class DashboardComponent extends LitElement {
     if (theme.fontFamily) style.setProperty('--dashboard-font-family', theme.fontFamily);
     if (theme.borderRadius) style.setProperty('--widget-border-radius', `${theme.borderRadius}px`);
     if (theme.spacing) style.setProperty('--dashboard-gap', `${theme.spacing}px`);
+  }
+
+  /**
+   * Load dashboard definition from backend
+   */
+  private async _loadDashboardFromBackend(): Promise<void> {
+    if (!this.dashboardName || !this.backendBaseUrl) return;
+
+    try {
+      const response = await fetch(`${this.backendBaseUrl}/dashboards/${this.dashboardName}`);
+      if (!response.ok) {
+        throw new Error(`Failed to load dashboard: ${response.status}`);
+      }
+      const dashboardVersion = await response.json();
+      // The dashboard field can be either a string or an object
+      const dashboard = typeof dashboardVersion.dashboard === 'string'
+        ? JSON.parse(dashboardVersion.dashboard)
+        : dashboardVersion.dashboard;
+      this.dashboard = dashboard as Dashboard;
+    } catch (error) {
+      console.error(`Error loading dashboard ${this.dashboardName}:`, error);
+      this._errors.set('dashboard', `Failed to load dashboard: ${error}`);
+    }
   }
 
   private async _loadDataFromBackend(): Promise<void> {
@@ -198,7 +229,7 @@ export class DashboardComponent extends LitElement {
     }
 
     try {
-      const url = `${this.backendBaseUrl}/${this.dashboard!.id}/${widget.id}`;
+      const url = `${this.backendBaseUrl}/data/${this.dashboard!.id}/${widget.id}`;
       console.log(`Fetching data for widget ${widget.id} from: ${url}`);
 
       const response = await fetch(url, {

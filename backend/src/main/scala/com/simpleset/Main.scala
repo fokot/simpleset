@@ -12,6 +12,7 @@ import zio.http.Header.{AccessControlAllowOrigin, Origin}
 import zio.http.Middleware.{CorsConfig, cors}
 import zio.json.ast.Json
 import zio.json.DecoderOps
+import zio.process.Command
 import zio.schema.{DeriveSchema, Schema}
 import zio.schema.annotation.description
 
@@ -46,16 +47,6 @@ object ErrorResponse:
   given Schema[ErrorResponse] = DeriveSchema.gen[ErrorResponse]
 
 object Main extends ZIOAppDefault:
-
-  // Initialize backend with sample data
-  def initializeBackend(backend: Backend): Task[Unit] =
-    for {
-      _ <- backend.saveDashboard("Sales Dashboard", Json.Obj("type" -> Json.Str("sales")))
-      _ <- backend.saveDashboard("Marketing Analytics", Json.Obj("type" -> Json.Str("marketing")))
-      _ <- backend.saveDashboard("User Engagement", Json.Obj("type" -> Json.Str("engagement")))
-      _ <- backend.saveDashboard("Financial Overview", Json.Obj("type" -> Json.Str("financial")))
-      _ <- backend.saveDashboard("System Performance", Json.Obj("type" -> Json.Str("performance")))
-    } yield ()
 
   // Define endpoints using Endpoint API
 
@@ -162,13 +153,9 @@ object Main extends ZIOAppDefault:
   def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
     for
       _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
-      _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
 
       // Create backend instance
       backend <- InMemoryBackend.make
-
-      // Initialize with sample data
-      _ <- initializeBackend(backend)
 
       // Generate OpenAPI documentation
       openAPI = OpenAPIGen.fromEndpoints(
@@ -195,5 +182,9 @@ object Main extends ZIOAppDefault:
       httpApp = allRoutes @@ cors(corsConfig)
 //      httpApp = allRoutes @@ Middleware.cors
 
-      _ <- Server.serve(httpApp).provide(Server.default)
+      process <- Server.serve(httpApp).provide(Server.default).fork
+      result <- Command("../init-data.sh", s"http://localhost:$port").exitCode.delay(2.seconds)
+      _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
+      _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
+      _ <- process.join
     yield ()
