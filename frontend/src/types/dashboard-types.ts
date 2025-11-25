@@ -108,8 +108,29 @@ export interface MarkdownWidgetConfig {
   linkify?: boolean;
 }
 
+export interface DataBinding {
+  sql?: string;
+  dataSourceId: string;
+  queryId?: string;
+  parameters?: Record<string, any>;
+  xAxisColumn?: string;
+  yAxisColumns?: string[];
+  groupByColumn?: string;
+  aggregation?: 'sum' | 'avg' | 'count' | 'min' | 'max';
+  filters?: Array<{
+    column: string;
+    operator: 'eq' | 'ne' | 'gt' | 'gte' | 'lt' | 'lte' | 'in' | 'nin' | 'like';
+    value: any;
+  }>;
+  sortBy?: {
+    column: string;
+    direction: 'asc' | 'desc';
+  };
+  limit?: number;
+}
+
 export type WidgetConfig =
-  | { type: 'chart' }
+  | { type: 'chart'; dataBinding?: DataBinding }
   | { type: 'text'; config: TextWidgetConfig }
   | { type: 'image'; config: ImageWidgetConfig }
   | { type: 'iframe'; config: IFrameWidgetConfig }

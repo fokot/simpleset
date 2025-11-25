@@ -140,6 +140,15 @@
             font-size: 0.9rem;
             line-height: 1.5;
         }
+
+        .chart-info code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
@@ -171,8 +180,9 @@
             </div>
             
             <div class="chart-info">
-                <h3>🚀 Enhanced with Apache ECharts</h3>
-                <p>This dashboard showcases real interactive charts powered by ECharts, featuring smooth animations, responsive design, and rich data visualizations including line charts, bar charts, pie charts, area charts, scatter plots, and radar charts.</p>
+                <h3>🚀 Enhanced with Apache ECharts + Static Data</h3>
+                <p>This dashboard showcases real interactive charts powered by ECharts with static data. Features smooth animations, responsive design, and rich data visualizations including line charts, bar charts, pie charts, area charts, scatter plots, and radar charts.</p>
+                <p style="margin-top: 10px;"><strong>Static Data:</strong> All charts use hardcoded data for demonstration purposes, showing various chart types and configurations.</p>
                 <p id="debug-status" style="color: #667eea; font-weight: bold; margin-top: 10px;">Loading dashboard component...</p>
             </div>
 
@@ -188,7 +198,7 @@
         const analyticsDashboard = {
             id: "analytics-dashboard",
             name: "Website Analytics Dashboard",
-            description: "Comprehensive analytics with ECharts visualizations",
+            description: "Comprehensive analytics with ECharts visualizations (Backend Data)",
             layout: {
                 type: "grid",
                 columns: 12,
@@ -272,7 +282,7 @@
                 },
                 {
                     id: "traffic-trend-chart",
-                    title: "Traffic Trend (Last 30 Days)",
+                    title: "Traffic Trend",
                     position: { x: 0, y: 2, width: 8, height: 4 },
                     config: {
                         type: "chart"
@@ -312,17 +322,17 @@
             },
             "traffic-trend-chart": {
                 type: "area",
-                labels: ["Day 1", "Day 5", "Day 10", "Day 15", "Day 20", "Day 25", "Day 30"],
+                labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
                 datasets: [
                     {
                         label: "Visitors",
-                        data: [1200, 1450, 1380, 1650, 1820, 1950, 2100],
+                        data: [4200, 5100, 4800, 6200, 7100, 6800],
                         backgroundColor: "rgba(102, 126, 234, 0.3)",
                         borderColor: "#667eea"
                     },
                     {
-                        label: "Page Views",
-                        data: [2400, 2800, 2650, 3100, 3400, 3650, 3900],
+                        label: "Pageviews",
+                        data: [12500, 15200, 14100, 18500, 21300, 20400],
                         backgroundColor: "rgba(118, 75, 162, 0.3)",
                         borderColor: "#764ba2"
                     }
