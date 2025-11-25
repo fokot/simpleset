@@ -94,14 +94,16 @@ object Main extends ZIOAppDefault:
     // In a real implementation, you would execute the SQL query here
     // For now, we'll just log the SQL and return fake data
     //    request.sql.foreach(sql => println(s"Executing SQL: $sql"))
-    """[
-      {"month": "Jan", "sales": 4200, "revenue": 12500.50},
-      {"month": "Feb", "sales": 5100, "revenue": 15200.75},
-      {"month": "Mar", "sales": 4800, "revenue": 14100.25},
-      {"month": "Apr", "sales": 6200, "revenue": 18500.00},
-      {"month": "May", "sales": 7100, "revenue": 21300.50},
-      {"month": "Jun", "sales": 6800, "revenue": 20400.75}
-    ]"""
+    """{
+      "data": [
+        {"month": "Jan", "sales": 4200, "revenue": 12500.50},
+        {"month": "Feb", "sales": 5100, "revenue": 15200.75},
+        {"month": "Mar", "sales": 4800, "revenue": 14100.25},
+        {"month": "Apr", "sales": 6200, "revenue": 18500.00},
+        {"month": "May", "sales": 7100, "revenue": 21300.50},
+        {"month": "Jun", "sales": 6800, "revenue": 20400.75}
+      ]
+    }"""
   }
 
   // Implement endpoints
