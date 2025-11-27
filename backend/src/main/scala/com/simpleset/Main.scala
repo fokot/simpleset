@@ -183,7 +183,7 @@ object Main extends ZIOAppDefault:
 //      httpApp = allRoutes @@ Middleware.cors
 
       process <- Server.serve(httpApp).provide(Server.default).fork
-      result <- Command("../init-data.sh", s"http://localhost:$port").exitCode.delay(2.seconds)
+      result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode.delay(2.seconds)
       _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
       _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
       _ <- process.join

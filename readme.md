@@ -20,6 +20,7 @@ Imagine if [Superset](https://superset.apache.org/) was re-invented with
 * .augment/rules - rules for LLMs
 * api - API definition in [Zod](https://zod.dev/)
 * backend - backend implementation in [Scala 3](https://scala-lang.org/)
+* examples - Demo HTML pages to test the components
 * frontend - frontend implementation in [Lit](https://lit.dev/)
 
 

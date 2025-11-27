@@ -38,7 +38,6 @@ A simple web component built with Lit that displays "Hello" text with interactiv
 
 - `src/hello-component.js` - The main Lit web component
 - `dist/hello-component.js` - Built and minified component (generated)
-- `index.html` - Demo page to test the component
 - `rollup.config.js` - Build configuration
 - `package.json` - Dependencies and scripts
 
