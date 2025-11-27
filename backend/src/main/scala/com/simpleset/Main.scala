@@ -10,13 +10,14 @@ import zio.http.endpoint.*
 import zio.http.endpoint.openapi.*
 import zio.http.Header.{AccessControlAllowOrigin, Origin}
 import zio.http.Middleware.{CorsConfig, cors}
+import zio.http.Server.Config
 import zio.json.ast.Json
 import zio.json.DecoderOps
 import zio.process.Command
 import zio.schema.{DeriveSchema, Schema}
 import zio.schema.annotation.description
 
-import java.net.URLDecoder
+import java.net.{InetSocketAddress, URLDecoder}
 import java.nio.charset.StandardCharsets
 
 // Request/Response models for OpenAPI - use String for dashboard to avoid schema issues
@@ -182,7 +183,9 @@ object Main extends ZIOAppDefault:
       httpApp = allRoutes @@ cors(corsConfig)
 //      httpApp = allRoutes @@ Middleware.cors
 
-      process <- Server.serve(httpApp).provide(Server.default).fork
+      serverConfig = Config.default.copy(address = new InetSocketAddress(port))
+
+      process <- Server.serve(httpApp).provide(ZLayer.succeed(serverConfig), Server.live).fork
       result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode.delay(2.seconds)
       _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
       _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
