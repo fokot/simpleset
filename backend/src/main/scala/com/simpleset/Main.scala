@@ -16,6 +16,7 @@ import zio.json.DecoderOps
 import zio.process.Command
 import zio.schema.{DeriveSchema, Schema}
 import zio.schema.annotation.description
+import zio.schema.codec.json._
 
 import java.net.{InetSocketAddress, URLDecoder}
 import java.nio.charset.StandardCharsets
@@ -25,7 +26,7 @@ case class SaveDashboardRequest(
   @description("Name of the dashboard")
   name: String,
   @description("Dashboard configuration as JSON string")
-  dashboard: String
+  dashboard: Json
 )
 
 object SaveDashboardRequest:
@@ -109,9 +110,7 @@ object Main extends ZIOAppDefault:
     val saveDashboardRoute = saveDashboardEndpoint.implementHandler(
       handler { (req: SaveDashboardRequest) =>
         (for {
-          json <- ZIO.fromEither(req.dashboard.fromJson[Json])
-            .mapError(err => new IllegalArgumentException(s"Invalid JSON: $err"))
-          _ <- backend.saveDashboard(req.name, json)
+          _ <- backend.saveDashboard(req.name, req.dashboard)
         } yield SuccessResponse("success"))
           .mapError(err => ErrorResponse(err.getMessage))
       }

@@ -27,12 +27,9 @@ create_dashboard() {
 
   echo "Creating dashboard: $name"
 
-  # Convert the dashboard JSON to a properly escaped string
-  local dashboard_string=$(echo "$dashboard_json" | jq -c . | jq -R .)
-
   response=$(curl -s -w "\n%{http_code}" -X POST "$ENDPOINT" \
     -H "Content-Type: application/json" \
-    -d "{\"name\":\"$name\",\"dashboard\":$dashboard_string}")
+    -d "{\"name\":\"$name\",\"dashboard\":$dashboard_json}")
 
   http_code=$(echo "$response" | tail -n1)
   body=$(echo "$response" | sed '$d')

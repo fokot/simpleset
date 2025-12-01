@@ -175,11 +175,7 @@ export class DashboardComponent extends LitElement {
         throw new Error(`Failed to load dashboard: ${response.status}`);
       }
       const dashboardVersion = await response.json();
-      // The dashboard field can be either a string or an object
-      const dashboard = typeof dashboardVersion.dashboard === 'string'
-        ? JSON.parse(dashboardVersion.dashboard)
-        : dashboardVersion.dashboard;
-      this.dashboard = dashboard as Dashboard;
+      this.dashboard = dashboardVersion.dashboard as Dashboard;
     } catch (error) {
       console.error(`Error loading dashboard ${this.dashboardName}:`, error);
       this._errors.set('dashboard', `Failed to load dashboard: ${error}`);

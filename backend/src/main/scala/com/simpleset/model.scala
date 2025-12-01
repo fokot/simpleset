@@ -3,16 +3,10 @@ package com.simpleset
 import zio.json.{DeriveJsonDecoder, JsonDecoder, DecoderOps, EncoderOps}
 import zio.json.ast.Json
 import zio.schema.{DeriveSchema, Schema}
-
+import zio.schema.codec.json._
 import java.time.Instant
 
 object model {
-
-  // Custom Schema for Json that serializes it as plain JSON string
-  given Schema[Json] = Schema.primitive[String].transform(
-    str => str.fromJson[Json].getOrElse(Json.Null),
-    json => json.toJson
-  )
 
   case class DashboardVersion(id: Long, name: String, dashboard: Json, updatedAt: Instant)
 
