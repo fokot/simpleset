@@ -11,6 +11,7 @@ Imagine if [Superset](https://superset.apache.org/) was re-invented with
   * Custom dashboard interaction html events
 * Effortless query & dashboard management
   * Version history stored in a database or Git
+* Efficient caching (reuse query results across charts)
 * Localization-ready
 * Robust row-level security
 * Fine-grained access rules per table
