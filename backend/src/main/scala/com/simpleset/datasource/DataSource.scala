@@ -6,11 +6,8 @@ import zio.json.ast.Json
 
 trait DataSource {
 
-  def getData(dataBinding: DataBinding, params: Map[String, Any]): Task[Json]
+  def testConnection(ds: PostgresDataSource): Task[Boolean]
 
-}
+  def getData(dataBinding: DataBinding, params: Map[String, Json]): Task[Json]
 
-object DataSource {
-  
-  def get(id: String): Task[DataSource] = ???
 }
