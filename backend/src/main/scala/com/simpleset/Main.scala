@@ -1,6 +1,7 @@
 package com.simpleset
 
 import com.simpleset.dashboard.{Backend, InMemoryBackend}
+import com.simpleset.datasource.{DataSourceRegistry, PostgresConfig, PostgresDataSource}
 import com.simpleset.model.{DashboardVersion, DashboardVersionList}
 import zio.*
 import zio.http.*
@@ -16,7 +17,7 @@ import zio.json.DecoderOps
 import zio.process.Command
 import zio.schema.{DeriveSchema, Schema}
 import zio.schema.annotation.description
-import zio.schema.codec.json._
+import zio.schema.codec.json.*
 
 import java.net.{InetSocketAddress, URLDecoder}
 import java.nio.charset.StandardCharsets
@@ -79,7 +80,7 @@ object Main extends ZIOAppDefault:
 
   // GET /api/dashboard-data/:type - Get mock dashboard data by type
   val getDashboardDataEndpoint =
-    Endpoint(RoutePattern.GET / "data" / PathCodec.string("dashboard") /  PathCodec.string("chart"))
+    Endpoint(RoutePattern.GET / "data" / PathCodec.long("dashboard") /  PathCodec.string("chart"))
       .out[Json](Doc.p("Dashboard data as JSON string"))
       .outError[ErrorResponse](Status.NotFound) ?? Doc.p("Get mock dashboard data")
 
@@ -131,10 +132,11 @@ object Main extends ZIOAppDefault:
       }
     )
 
-    val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
-      handler { (name: String, chart: String) =>
-        ZIO.fromEither(getMockChartData(name, chart).fromJson[Json])
-          .mapError(err => ErrorResponse(s"Invalid JSON: $err"))
+    val getDashboardDataRoute: Route[DataSourceRegistry, Nothing] = getDashboardDataEndpoint.implementHandler(
+      handler { (id: Long, chart: String) =>
+        backend.getDataForChart(id, chart)
+//        ZIO.fromEither(getMockChartData(name, chart).fromJson[Json])
+//          .mapError(err => ErrorResponse(s"Invalid JSON: $err"))
       }
     )
 
@@ -148,10 +150,11 @@ object Main extends ZIOAppDefault:
   }
 
   private val port = 8080
+  private val serverConfig = Config.default.copy(address = new InetSocketAddress(port))
 
   // Main application
   def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
-    for
+    ZIO.scoped(for
       _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
 
       // Create backend instance
@@ -182,11 +185,22 @@ object Main extends ZIOAppDefault:
       httpApp = allRoutes @@ cors(corsConfig)
 //      httpApp = allRoutes @@ Middleware.cors
 
-      serverConfig = Config.default.copy(address = new InetSocketAddress(port))
+      // for testing
+      registry <- ZIO.service[DataSourceRegistry]
+      analyticsDb <- PostgresDataSource.make(PostgresConfig(
+        "jdbc:postgresql://localhost:5432/postgres",
+        "postgres",
+        "postgres"
+      ))
+      _ <- registry.register("analytics-db", analyticsDb)
 
-      process <- Server.serve(httpApp).provide(ZLayer.succeed(serverConfig), Server.live).fork
-      result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode.delay(2.seconds)
+      process <- Server.serve(httpApp).fork
+      result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode.delay(5.seconds)
       _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
       _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
       _ <- process.join
-    yield ()
+    yield ()).provide(
+      ZLayer.succeed(serverConfig),
+      Server.live,
+      DataSourceRegistry.layer
+    )
