@@ -143,7 +143,7 @@ sales_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month, sales, revenue FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "sales-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -161,7 +161,7 @@ sales_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS region, sales FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "sales-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -206,7 +206,7 @@ operations_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS time, sales AS server1, revenue AS server2 FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "operations-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -251,7 +251,7 @@ financial_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS quarter, sales AS revenue, revenue AS expenses FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "financial-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -269,7 +269,7 @@ financial_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month, revenue AS cashFlow FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "financial-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true

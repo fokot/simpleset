@@ -17,23 +17,5 @@ trait Backend {
 
   def getDataBindings(id: Long): Task[List[Chart]] = getDashboard(id).map(d => findDataBindings(d.dashboard))
 
-  def getDataForDashboard(id: Long): RIO[DataSourceRegistry, List[(String, Json)]] = getDataBindings(id).flatMap(
-      ZIO.foreachPar(_) ( chart =>
-        for {
-          ds <- DataSourceRegistry.get(chart.dataBinding.dataSourceId)
-          data <- ds.getData(chart.dataBinding, Map.empty)
-        } yield (chart.id, data)
-      )
-  )
-
-  def getDataForChart(id: Long, chartId: String): RIO[DataSourceRegistry, Json] =
-    for {
-      bindings <- getDataBindings(id)
-      dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
-      ds <- DataSourceRegistry.get(dataBinding.dataSourceId)
-      data <- ds.getData(dataBinding, Map.empty)
-    } yield data
-
-
   // FIXME add typed api to edit data sources according to zod definitions
 }

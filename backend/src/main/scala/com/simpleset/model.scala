@@ -1,9 +1,11 @@
 package com.simpleset
 
-import zio.json.{DeriveJsonDecoder, JsonDecoder, DecoderOps, EncoderOps}
+import zio.json.{DecoderOps, DeriveJsonDecoder, EncoderOps, JsonDecoder}
 import zio.json.ast.Json
+import zio.schema.annotation.description
 import zio.schema.{DeriveSchema, Schema}
-import zio.schema.codec.json._
+import zio.schema.codec.json.*
+
 import java.time.Instant
 
 object model {
@@ -43,4 +45,32 @@ object model {
           acc
       }
     )
+
+
+  // Request/Response models for OpenAPI - use String for dashboard to avoid schema issues
+  case class SaveDashboardRequest(
+                                   @description("Name of the dashboard")
+                                   name: String,
+                                   @description("Dashboard configuration as JSON string")
+                                   dashboard: Json
+                                 )
+
+  object SaveDashboardRequest:
+    given Schema[SaveDashboardRequest] = DeriveSchema.gen[SaveDashboardRequest]
+
+  case class SuccessResponse(
+                              @description("Status message")
+                              status: String
+                            )
+
+  object SuccessResponse:
+    given Schema[SuccessResponse] = DeriveSchema.gen[SuccessResponse]
+
+  case class ErrorResponse(
+                            @description("Error message")
+                            error: String
+                          )
+
+  object ErrorResponse:
+    given Schema[ErrorResponse] = DeriveSchema.gen[ErrorResponse]
 }
