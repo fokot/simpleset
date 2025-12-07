@@ -33,13 +33,13 @@ object Main extends ZIOAppDefault:
 //      httpApp = allRoutes @@ Middleware.cors
 
       // for testing
-      registry <- ZIO.service[DataSourceRegistry]
-      analyticsDb <- PostgresDataSource.make(PostgresConfig(
-        "jdbc:postgresql://localhost:5432/postgres",
-        "postgres",
-        "postgres"
-      ))
-      _ <- registry.register("analytics-db", analyticsDb)
+//      registry <- ZIO.service[DataSourceRegistry]
+//      analyticsDb <- PostgresDataSource.make(PostgresConfig(
+//        "jdbc:postgresql://localhost:5432/postgres",
+//        "postgres",
+//        "postgres"
+//      ))
+//      _ <- registry.register("analytics-db", analyticsDb)
 
       process <- Server.serve(httpApp).fork
       result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode.delay(5.seconds)

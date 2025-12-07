@@ -9,6 +9,7 @@ import zio.http.{RoutePattern, Routes, Status, handler}
 import zio.http.codec.{Doc, PathCodec}
 import zio.http.endpoint.Endpoint
 import zio.http.endpoint.openapi.{OpenAPIGen, SwaggerUI}
+import zio.json.DecoderOps
 import zio.json.ast.Json
 import zio.schema.Schema
 import zio.schema.codec.json.*
@@ -45,7 +46,7 @@ object Api {
 
   // GET /api/dashboard-data/:type - Get mock dashboard data by type
   val getDashboardDataEndpoint =
-    Endpoint(RoutePattern.GET / "data" / PathCodec.long("dashboard") / PathCodec.string("chart"))
+    Endpoint(RoutePattern.GET / "data" / PathCodec.string("dashboard") / PathCodec.long("versionId") / PathCodec.string("chart"))
       .out[Json](Doc.p("Dashboard data as JSON string"))
       .outError[ErrorResponse](Status.NotFound) ?? Doc.p("Get mock dashboard data")
 
@@ -113,13 +114,14 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
 
 
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
-    handler { (id: Long, chartId: String) =>
-      (for {
-        bindings <- backend.getDataBindings(id)
-        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
-        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
-        data <- ds.getData(dataBinding, Map.empty)
-      } yield data).mapError(err => ErrorResponse(err.getMessage))
+    handler { (id: String, versionId: Long, chartId: String) =>
+//      (for {
+//        bindings <- backend.getDataBindings(versionId)
+//        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
+//        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
+//        data <- ds.getData(dataBinding, Map.empty)
+//      } yield data).mapError(err => ErrorResponse(err.getMessage))
+        ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => ErrorResponse(err))
     }
   )
 

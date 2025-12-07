@@ -108,6 +108,9 @@ export class DashboardComponent extends LitElement {
   @property({ type: Object })
   dashboard?: Dashboard;
 
+  @property({ type: Number })
+  dashboardVersionId?: number;
+
   @property({ type: Object })
   data?: DashboardData;
 
@@ -176,6 +179,7 @@ export class DashboardComponent extends LitElement {
       }
       const dashboardVersion = await response.json();
       this.dashboard = dashboardVersion.dashboard as Dashboard;
+      this.dashboardVersionId = dashboardVersion.id;
     } catch (error) {
       console.error(`Error loading dashboard ${this.dashboardName}:`, error);
       this._errors.set('dashboard', `Failed to load dashboard: ${error}`);
@@ -225,7 +229,7 @@ export class DashboardComponent extends LitElement {
     }
 
     try {
-      const url = `${this.backendBaseUrl}/data/${this.dashboard!.id}/${widget.id}`;
+      const url = `${this.backendBaseUrl}/data/${this.dashboard!.id}/${this.dashboardVersionId}/${widget.id}`;
       console.log(`Fetching data for widget ${widget.id} from: ${url}`);
 
       const response = await fetch(url, {
