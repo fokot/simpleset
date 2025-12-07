@@ -22,7 +22,7 @@ object Main extends ZIOAppDefault:
     ZIO.scoped(for
       _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
 
-      routes <- ZIO.service[SimplesetRoutes]
+      routes <- ZIO.service[Api]
 
       // Create the HTTP app with CORS support - allow all origins
       corsConfig = CorsConfig(
@@ -50,6 +50,6 @@ object Main extends ZIOAppDefault:
       ZLayer.succeed(serverConfig),
       Server.live,
       DataSourceRegistry.layer,
-      SimplesetRoutes.layer,
+      Api.layer,
       InMemoryBackend.layer,
     )

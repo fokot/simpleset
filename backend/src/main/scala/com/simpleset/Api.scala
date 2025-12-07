@@ -16,7 +16,7 @@ import zio.schema.codec.json.*
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 
-object SimplesetRoutes {
+object Api {
 
   // GET /dashboards - List all dashboards
   val getDashboardsEndpoint =
@@ -64,13 +64,13 @@ object SimplesetRoutes {
     for {
       backend <- ZIO.service[Backend]
       dataSourceRegistry <- ZIO.service[DataSourceRegistry]
-    } yield new SimplesetRoutes(backend, dataSourceRegistry)
+    } yield new Api(backend, dataSourceRegistry)
   )
 }
 
-class SimplesetRoutes(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
+class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
 
-  import SimplesetRoutes.*
+  import Api.*
 
   val getDashboardsRoute = getDashboardsEndpoint.implementHandler(
     handler {
@@ -145,5 +145,5 @@ class SimplesetRoutes(backend: Backend, dataSourceRegistry: DataSourceRegistry) 
     getDashboardByNameRoute,
     getDashboardByIdRoute,
     getDashboardDataRoute
-  ) ++ SwaggerUI.routes(path("docs") / "openapi", SimplesetRoutes.openAPI)
+  ) ++ SwaggerUI.routes(path("docs") / "openapi", Api.openAPI)
 }
