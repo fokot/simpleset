@@ -45,66 +45,67 @@ create_dashboard() {
 
 # Analytics Dashboard
 analytics_dashboard='{
-  "id": "analytics-dashboard",
-  "name": "Analytics Dashboard",
-  "description": "Website traffic and user analytics",
-  "layout": {
-    "type": "grid",
-    "columns": 12,
-    "rowHeight": 100
-  },
-  "theme": {
-    "name": "analytics",
-    "backgroundColor": "#ffffff",
-    "primaryColor": "#667eea",
-    "secondaryColor": "#764ba2",
-    "fontFamily": "Inter, system-ui, sans-serif",
-    "borderRadius": 8,
-    "spacing": 16
-  },
-  "sharing": {
-    "isPublic": true,
-    "allowedUsers": []
-  },
-  "widgets": [
-    {
-      "id": "traffic-trend-chart",
-      "title": "Traffic Trend (Auto-Loaded)",
-      "position": {
-        "x": 0,
-        "y": 0,
-        "width": 8,
-        "height": 4
-      },
-      "config": {
-        "type": "chart",
-        "dataBinding": {
-          "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "analytics-db"
-        }
-      },
-      "visible": true
-    },
-    {
-      "id": "device-breakdown-chart",
-      "title": "Device Breakdown (Auto-Loaded)",
-      "position": {
-        "x": 8,
-        "y": 0,
-        "width": 4,
-        "height": 4
-      },
-      "config": {
-        "type": "chart",
-        "dataBinding": {
-          "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = 2024 LIMIT 3",
-          "dataSourceId": "analytics-db"
-        }
-      },
-      "visible": true
-    }
-  ]
-}'
+                       "id": "analytics-dashboard",
+                       "name": "Analytics Dashboard",
+                       "description": "Website traffic and user analytics",
+                       "layout": {
+                         "type": "grid",
+                         "columns": 12,
+                         "rowHeight": 100
+                       },
+                       "theme": {
+                         "name": "analytics",
+                         "backgroundColor": "#ffffff",
+                         "primaryColor": "#667eea",
+                         "secondaryColor": "#764ba2",
+                         "fontFamily": "Inter, system-ui, sans-serif",
+                         "borderRadius": 8,
+                         "spacing": 16
+                       },
+                       "sharing": {
+                         "isPublic": true,
+                         "allowedUsers": []
+                       },
+                       "widgets": [
+                         {
+                           "id": "traffic-trend-chart",
+                           "title": "Traffic Trend (Auto-Loaded)",
+                           "position": {
+                             "x": 0,
+                             "y": 0,
+                             "width": 8,
+                             "height": 4
+                           },
+                           "config": {
+                             "type": "chart",
+                             "dataBinding": {
+                               "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = 2024",
+                               "dataSourceId": "analytics-db"
+                             }
+                           },
+                           "visible": true
+                         },
+                         {
+                           "id": "device-breakdown-chart",
+                           "title": "Device Breakdown (Auto-Loaded)",
+                           "position": {
+                             "x": 8,
+                             "y": 0,
+                             "width": 4,
+                             "height": 4
+                           },
+                           "config": {
+                             "type": "chart",
+                             "id": "chart-001",
+                             "dataBinding": {
+                               "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = 2024 LIMIT 3",
+                               "dataSourceId": "analytics-db"
+                             }
+                           },
+                           "visible": true
+                         }
+                       ]
+                     }'
 
 # Sales Dashboard
 sales_dashboard='{

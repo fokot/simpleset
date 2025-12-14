@@ -15,7 +15,5 @@ trait Backend {
 
   def getDashboard(id: Long): Task[DashboardVersion]
 
-  def getDataBindings(id: Long): Task[List[Chart]] = getDashboard(id).map(d => findDataBindings(d.dashboard))
-
   // FIXME add typed api to edit data sources according to zod definitions
 }

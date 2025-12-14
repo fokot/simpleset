@@ -116,7 +116,10 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
     handler { (id: String, versionId: Long, chartId: String) =>
 //      (for {
-//        bindings <- backend.getDataBindings(versionId)
+//        dashboardVersion <- backend.getDashboard(versionId)
+//        _ <- ZIO.debug(s"Dashboard version: $dashboardVersion found")
+//        bindings = model.findDataBindings(dashboardVersion.dashboard)
+//        _ <- ZIO.debug(s"Dashboard bindings: $bindings")
 //        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
 //        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
 //        data <- ds.getData(dataBinding, Map.empty)
