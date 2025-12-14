@@ -9,7 +9,7 @@ import zio.http.{RoutePattern, Routes, Status, handler}
 import zio.http.codec.{Doc, PathCodec}
 import zio.http.endpoint.Endpoint
 import zio.http.endpoint.openapi.{OpenAPIGen, SwaggerUI}
-import zio.json.DecoderOps
+import zio.json.{DecoderOps, EncoderOps}
 import zio.json.ast.Json
 import zio.schema.Schema
 import zio.schema.codec.json.*
@@ -115,16 +115,17 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
 
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
     handler { (id: String, versionId: Long, chartId: String) =>
-//      (for {
-//        dashboardVersion <- backend.getDashboard(versionId)
-//        _ <- ZIO.debug(s"Dashboard version: $dashboardVersion found")
-//        bindings = model.findDataBindings(dashboardVersion.dashboard)
-//        _ <- ZIO.debug(s"Dashboard bindings: $bindings")
-//        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
-//        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
-//        data <- ds.getData(dataBinding, Map.empty)
-//      } yield data).mapError(err => ErrorResponse(err.getMessage))
-        ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => ErrorResponse(err))
+      (for {
+        dashboardVersion <- backend.getDashboard(versionId)
+        bindings = model.findDataBindings(dashboardVersion.dashboard)
+        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
+        _ <- ZIO.debug(s"Data binding found: $binding")
+        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
+        data <- ds.getData(dataBinding, Map.empty)
+        res = Json.Obj("data" -> data)
+//               d <- ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => new Exception(err))
+      } yield res).mapError(err => ErrorResponse(err.getMessage))
+      //        ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => ErrorResponse(err))
     }
   )
 
