@@ -17,6 +17,19 @@ fi
 BASE_URL="$1"
 ENDPOINT="$BASE_URL/dashboards"
 
+# Waiting until server is ready
+while true; do
+  response=$(curl -s -w "\n%{http_code}" "$ENDPOINT")
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | sed '$d')
+  if [ "$http_code" -eq 200 ]; then
+    break
+  else
+    echo "Waiting for server to be ready..."
+    sleep 1
+  fi
+done
+
 echo "Initializing dashboards at $ENDPOINT..."
 echo ""
 
@@ -42,6 +55,8 @@ create_dashboard() {
     exit 1
   fi
 }
+
+
 
 # Analytics Dashboard
 analytics_dashboard='{
