@@ -129,10 +129,53 @@ export class DashboardComponent extends LitElement {
   @state()
   private _isLoading: boolean = false;
 
+  @state()
+  private _filterParams: Map<string, any> = new Map();
+
+  connectedCallback() {
+    super.connectedCallback();
+    // Listen for filter change events
+    this.addEventListener('filter-change', this._handleFilterChange as EventListener);
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.removeEventListener('filter-change', this._handleFilterChange as EventListener);
+  }
+
+  private _handleFilterChange = async (event: CustomEvent) => {
+    const { parameter, value, targetWidgetIds } = event.detail;
+    console.log(`Filter changed: ${parameter} = ${value}`, targetWidgetIds);
+
+    // Update filter parameters
+    this._filterParams.set(parameter, value);
+
+    // Reload data for target widgets
+    if (targetWidgetIds && targetWidgetIds.length > 0) {
+      const targetWidgets = this.dashboard?.widgets?.filter(w =>
+        targetWidgetIds.includes(w.id)
+      ) || [];
+
+      // Reload data for each target widget
+      for (const widget of targetWidgets) {
+        await this._loadWidgetData(widget);
+      }
+    }
+  }
+
   protected willUpdate(changedProperties: PropertyValues): void {
     // If dashboardName changed, load dashboard from backend
     if (changedProperties.has('dashboardName') && this.dashboardName && this.backendBaseUrl) {
       this._loadDashboardFromBackend();
+    }
+
+    // Initialize filter parameters from dashboard parameters
+    if (changedProperties.has('dashboard') && this.dashboard?.parameters) {
+      this.dashboard.parameters.forEach(param => {
+        if (param.defaultValue !== undefined && !this._filterParams.has(param.name)) {
+          this._filterParams.set(param.name, param.defaultValue);
+        }
+      });
     }
 
     // If dashboard or backendBaseUrl changed, trigger data loading
@@ -228,16 +271,36 @@ export class DashboardComponent extends LitElement {
       return;
     }
 
+    if (!this.dashboardVersionId) {
+      console.warn(`Dashboard version ID is not set`);
+      return;
+    }
+
     try {
-      const url = `${this.backendBaseUrl}/data/${this.dashboard!.id}/${this.dashboardVersionId}/${widget.id}`;
-      console.log(`Fetching data for widget ${widget.id} from: ${url}`);
+      const url = `${this.backendBaseUrl}/data`;
+
+      // Build parameters object from filter parameters
+      const parameters: Record<string, any> = {};
+      this._filterParams.forEach((value, key) => {
+        parameters[key] = value;
+      });
+
+      // Build request body
+      const requestBody = {
+        dashboard: this.dashboard!.id,
+        versionId: this.dashboardVersionId,
+        chartId: widget.id,
+        parameters: parameters
+      };
+
+      console.log(`Fetching data for widget ${widget.id} from: ${url}`, requestBody);
 
       const response = await fetch(url, {
-        method: 'GET',
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        // body: JSON.stringify({ sql, dataSourceId })
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -407,6 +470,11 @@ export class DashboardComponent extends LitElement {
   }
 
   private _renderWidgetContent(widget: DashboardWidget, data: any) {
+    // Filter widgets don't need data
+    if (widget.config.type === 'filter') {
+      return html`<filter-widget .config="${widget.config}"></filter-widget>`;
+    }
+
     if (!data) {
       const loadingMessage = this._isLoading ? 'Loading data from backend...' : 'Loading...';
       return html`<div class="loading-message">${loadingMessage}</div>`;

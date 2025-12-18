@@ -2,11 +2,11 @@ package com.simpleset
 
 import com.simpleset.dashboard.Backend
 import com.simpleset.datasource.DataSourceRegistry
-import com.simpleset.model.{DashboardVersion, DashboardVersionList, ErrorResponse, SaveDashboardRequest, SuccessResponse}
+import com.simpleset.model.{DashboardVersion, DashboardVersionList, ErrorResponse, GetDashboardDataRequest, SaveDashboardRequest, SuccessResponse}
 import zio.http.codec.PathCodec.path
-import zio.{ZIO, ZLayer}
+import zio.{Chunk, ZIO, ZLayer}
 import zio.http.{RoutePattern, Routes, Status, handler}
-import zio.http.codec.{Doc, PathCodec}
+import zio.http.codec.{Doc, PathCodec, QueryCodec}
 import zio.http.endpoint.Endpoint
 import zio.http.endpoint.openapi.{OpenAPIGen, SwaggerUI}
 import zio.json.{DecoderOps, EncoderOps}
@@ -44,11 +44,12 @@ object Api {
       .out[DashboardVersion](Doc.p("Dashboard details"))
       .outError[ErrorResponse](Status.NotFound) ?? Doc.p("Get dashboard by ID")
 
-  // GET /api/dashboard-data/:type - Get mock dashboard data by type
+  // POST /data - Get dashboard data by chart ID with parameters
   val getDashboardDataEndpoint =
-    Endpoint(RoutePattern.GET / "data" / PathCodec.string("dashboard") / PathCodec.long("versionId") / PathCodec.string("chart"))
-      .out[Json](Doc.p("Dashboard data as JSON string"))
-      .outError[ErrorResponse](Status.NotFound) ?? Doc.p("Get mock dashboard data")
+    Endpoint(RoutePattern.POST / "data")
+      .in[GetDashboardDataRequest](Doc.p("Dashboard data request with parameters"))
+      .out[Json](Doc.p("Dashboard data as JSON"))
+      .outError[ErrorResponse](Status.NotFound) ?? Doc.p("Get dashboard data for a specific chart")
 
   // Generate OpenAPI documentation
   val openAPI = OpenAPIGen.fromEndpoints(
@@ -114,18 +115,22 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
 
 
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
-    handler { (id: String, versionId: Long, chartId: String) =>
+    handler { (req: GetDashboardDataRequest) =>
       (for {
-        dashboardVersion <- backend.getDashboard(versionId)
+        dashboardVersion <- backend.getDashboard(req.versionId)
         bindings = model.findDataBindings(dashboardVersion.dashboard)
-        dataBinding <- ZIO.fromOption(bindings.find(_.id == chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: $chartId"), _.dataBinding)
-        _ <- ZIO.debug(s"Data binding found: $binding")
+        dataBinding <- ZIO.fromOption(bindings.find(_.id == req.chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: ${req.chartId}"), _.dataBinding)
+        _ <- ZIO.debug(s"Data binding found: $dataBinding")
+        // Convert request parameters (Json) to Map[String, Json]
+        params = req.parameters match {
+          case Json.Obj(fields) => fields.toMap
+          case _ => Map.empty[String, Json]
+        }
+        _ <- ZIO.debug(s"Query parameters: $params")
         ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
-        data <- ds.getData(dataBinding, Map.empty)
+        data <- ds.getData(dataBinding, params)
         res = Json.Obj("data" -> data)
-//               d <- ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => new Exception(err))
       } yield res).mapError(err => ErrorResponse(err.getMessage))
-      //        ZIO.fromEither(getMockChartData(id, chartId).fromJson[Json]).mapError(err => ErrorResponse(err))
     }
   )
 

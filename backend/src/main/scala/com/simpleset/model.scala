@@ -72,6 +72,20 @@ object model {
   object SaveDashboardRequest:
     given Schema[SaveDashboardRequest] = DeriveSchema.gen[SaveDashboardRequest]
 
+  case class GetDashboardDataRequest(
+                                      @description("Dashboard ID or name")
+                                      dashboard: String,
+                                      @description("Dashboard version ID")
+                                      versionId: Long,
+                                      @description("Chart ID")
+                                      chartId: String,
+                                      @description("Query parameters as JSON object")
+                                      parameters: Json
+                                    )
+
+  object GetDashboardDataRequest:
+    given Schema[GetDashboardDataRequest] = DeriveSchema.gen[GetDashboardDataRequest]
+
   case class SuccessResponse(
                               @description("Status message")
                               status: String

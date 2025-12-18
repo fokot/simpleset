@@ -81,20 +81,54 @@ analytics_dashboard='{
                          "isPublic": true,
                          "allowedUsers": []
                        },
+                       "parameters": [
+                         {
+                           "name": "year",
+                           "type": "number",
+                           "defaultValue": 2024,
+                           "required": false,
+                           "description": "Year to filter data"
+                         }
+                       ],
                        "widgets": [
+                         {
+                           "id": "year-filter",
+                           "title": "Year Filter",
+                           "position": {
+                             "x": 0,
+                             "y": 0,
+                             "width": 12,
+                             "height": 1
+                           },
+                           "config": {
+                             "type": "filter",
+                             "filterType": "dropdown",
+                             "label": "Select Year",
+                             "parameter": "year",
+                             "options": [
+                               {"label": "2003", "value": 2003},
+                               {"label": "2004", "value": 2004},
+                               {"label": "2023", "value": 2023},
+                               {"label": "2024", "value": 2024}
+                             ],
+                             "defaultValue": 2024,
+                             "targetWidgetIds": ["traffic-trend-chart", "device-breakdown-chart"]
+                           },
+                           "visible": true
+                         },
                          {
                            "id": "traffic-trend-chart",
                            "title": "Traffic Trend (Auto-Loaded)",
                            "position": {
                              "x": 0,
-                             "y": 0,
+                             "y": 1,
                              "width": 8,
                              "height": 4
                            },
                            "config": {
                              "type": "chart",
                              "dataBinding": {
-                               "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = 2024",
+                               "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = {{year}}",
                                "dataSourceId": "analytics-db"
                              }
                            },
@@ -105,7 +139,7 @@ analytics_dashboard='{
                            "title": "Device Breakdown (Auto-Loaded)",
                            "position": {
                              "x": 8,
-                             "y": 0,
+                             "y": 1,
                              "width": 4,
                              "height": 4
                            },
@@ -113,7 +147,7 @@ analytics_dashboard='{
                              "type": "chart",
                              "id": "chart-001",
                              "dataBinding": {
-                               "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = 2024 LIMIT 3",
+                               "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = {{year}} LIMIT 3",
                                "dataSourceId": "analytics-db"
                              }
                            },

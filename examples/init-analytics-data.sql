@@ -58,6 +58,36 @@ INSERT INTO monthly_data (year, month, sales, revenue) VALUES
     (2023, 'November', 85000.00, 222000.00),
     (2023, 'December', 92000.00, 238000.00);
 
+-- Insert data for 2004
+INSERT INTO monthly_data (year, month, sales, revenue) VALUES
+    (2004, 'January', 22000.00, 68000.00),
+    (2004, 'February', 24000.00, 72000.00),
+    (2004, 'March', 26000.00, 78000.00),
+    (2004, 'April', 28000.00, 82000.00),
+    (2004, 'May', 30000.00, 88000.00),
+    (2004, 'June', 32000.00, 92000.00),
+    (2004, 'July', 33000.00, 95000.00),
+    (2004, 'August', 35000.00, 98000.00),
+    (2004, 'September', 36000.00, 102000.00),
+    (2004, 'October', 38000.00, 108000.00),
+    (2004, 'November', 40000.00, 115000.00),
+    (2004, 'December', 42000.00, 122000.00);
+
+-- Insert data for 2003
+INSERT INTO monthly_data (year, month, sales, revenue) VALUES
+    (2003, 'January', 18000.00, 55000.00),
+    (2003, 'February', 19000.00, 58000.00),
+    (2003, 'March', 20000.00, 62000.00),
+    (2003, 'April', 21000.00, 65000.00),
+    (2003, 'May', 22000.00, 68000.00),
+    (2003, 'June', 24000.00, 72000.00),
+    (2003, 'July', 25000.00, 75000.00),
+    (2003, 'August', 26000.00, 78000.00),
+    (2003, 'September', 27000.00, 82000.00),
+    (2003, 'October', 29000.00, 88000.00),
+    (2003, 'November', 31000.00, 92000.00),
+    (2003, 'December', 33000.00, 98000.00);
+
 -- Verify the data was inserted
 SELECT 
     year,
