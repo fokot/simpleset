@@ -2,7 +2,14 @@ package com.simpleset
 
 import com.simpleset.dashboard.Backend
 import com.simpleset.datasource.DataSourceRegistry
-import com.simpleset.model.{DashboardVersion, DashboardVersionList, ErrorResponse, GetDashboardDataRequest, SaveDashboardRequest, SuccessResponse}
+import com.simpleset.model.{
+  DashboardVersion,
+  DashboardVersionList,
+  ErrorResponse,
+  GetDashboardDataRequest,
+  SaveDashboardRequest,
+  SuccessResponse
+}
 import zio.http.codec.PathCodec.path
 import zio.{ZIO, ZLayer}
 import zio.http.{RoutePattern, Routes, Status, handler}
@@ -58,12 +65,12 @@ object Api {
     saveDashboardEndpoint,
     getDashboardByNameEndpoint,
     getDashboardByIdEndpoint,
-    getDashboardDataEndpoint,
+    getDashboardDataEndpoint
   )
 
   def layer = ZLayer.fromZIO(
     for {
-      backend <- ZIO.service[Backend]
+      backend            <- ZIO.service[Backend]
       dataSourceRegistry <- ZIO.service[DataSourceRegistry]
     } yield new Api(backend, dataSourceRegistry)
   )
@@ -91,14 +98,16 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
   val getDashboardByNameRoute = getDashboardByNameEndpoint.implementHandler(
     handler { (name: String) =>
       val decodedName = URLDecoder.decode(name, StandardCharsets.UTF_8)
-      backend.getDashboard(decodedName)
+      backend
+        .getDashboard(decodedName)
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
   val getDashboardByIdRoute = getDashboardByIdEndpoint.implementHandler(
     handler { (id: Long) =>
-      backend.getDashboard(id)
+      backend
+        .getDashboard(id)
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -112,21 +121,22 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry) {
   //      )
   //    )
 
-
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
     handler { (req: GetDashboardDataRequest) =>
       (for {
         dashboardVersion <- backend.getDashboard(req.versionId)
         bindings = model.findDataBindings(dashboardVersion.dashboard)
-        dataBinding <- ZIO.fromOption(bindings.find(_.id == req.chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: ${req.chartId}"), _.dataBinding)
+        dataBinding <- ZIO
+          .fromOption(bindings.find(_.id == req.chartId))
+          .mapBoth(_ => new NoSuchElementException(s"Chart not found: ${req.chartId}"), _.dataBinding)
         _ <- ZIO.debug(s"Data binding found: $dataBinding")
         // Convert request parameters (Json) to Map[String, Json]
         params = req.parameters match {
           case Json.Obj(fields) => fields.toMap
-          case _ => Map.empty[String, Json]
+          case _                => Map.empty[String, Json]
         }
-        _ <- ZIO.debug(s"Query parameters: $params")
-        ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
+        _    <- ZIO.debug(s"Query parameters: $params")
+        ds   <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
         data <- ds.getData(dataBinding, params)
         res = Json.Obj("data" -> data)
       } yield res).mapError(err => ErrorResponse(err.getMessage))

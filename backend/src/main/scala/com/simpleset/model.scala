@@ -17,7 +17,7 @@ object model {
   }
 
   case class DashboardVersionList(id: Long, name: String, updatedAt: Instant)
-  
+
   object DashboardVersionList {
     given Schema[DashboardVersionList] = DeriveSchema.gen[DashboardVersionList]
   }
@@ -42,7 +42,7 @@ object model {
       json match {
         case Json.Obj(fields) =>
           // Check if this is a widget object with id and config.dataBinding
-          val idOpt = fields.collectFirst { case ("id", Json.Str(id)) => id }
+          val idOpt     = fields.collectFirst { case ("id", Json.Str(id)) => id }
           val configOpt = fields.collectFirst { case ("config", config) => config }
 
           (idOpt, configOpt) match {
@@ -52,7 +52,7 @@ object model {
                 dataBinding.as[DataBinding].toOption.map(db => Chart(id, db))
               }.flatten match {
                 case Some(chart) => acc :+ chart
-                case None => acc
+                case None        => acc
               }
             case _ => acc
           }
@@ -60,44 +60,43 @@ object model {
       }
     )
 
-
   // Request/Response models for OpenAPI - use String for dashboard to avoid schema issues
   case class SaveDashboardRequest(
-                                   @description("Name of the dashboard")
-                                   name: String,
-                                   @description("Dashboard configuration as JSON string")
-                                   dashboard: Json
-                                 )
+      @description("Name of the dashboard")
+      name: String,
+      @description("Dashboard configuration as JSON string")
+      dashboard: Json
+  )
 
   object SaveDashboardRequest:
     given Schema[SaveDashboardRequest] = DeriveSchema.gen[SaveDashboardRequest]
 
   case class GetDashboardDataRequest(
-                                      @description("Dashboard ID or name")
-                                      dashboard: String,
-                                      @description("Dashboard version ID")
-                                      versionId: Long,
-                                      @description("Chart ID")
-                                      chartId: String,
-                                      @description("Query parameters as JSON object")
-                                      parameters: Json
-                                    )
+      @description("Dashboard ID or name")
+      dashboard: String,
+      @description("Dashboard version ID")
+      versionId: Long,
+      @description("Chart ID")
+      chartId: String,
+      @description("Query parameters as JSON object")
+      parameters: Json
+  )
 
   object GetDashboardDataRequest:
     given Schema[GetDashboardDataRequest] = DeriveSchema.gen[GetDashboardDataRequest]
 
   case class SuccessResponse(
-                              @description("Status message")
-                              status: String
-                            )
+      @description("Status message")
+      status: String
+  )
 
   object SuccessResponse:
     given Schema[SuccessResponse] = DeriveSchema.gen[SuccessResponse]
 
   case class ErrorResponse(
-                            @description("Error message")
-                            error: String
-                          )
+      @description("Error message")
+      error: String
+  )
 
   object ErrorResponse:
     given Schema[ErrorResponse] = DeriveSchema.gen[ErrorResponse]

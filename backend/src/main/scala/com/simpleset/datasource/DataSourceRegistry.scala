@@ -11,9 +11,11 @@ class DataSourceRegistry(dataSources: TMap[String, DataSource]) {
     }
 
   def get(id: String): Task[DataSource] =
-    STM.atomically {
-      dataSources.get(id)
-    }.someOrFail(new NoSuchElementException(s"Data source not found: $id"))
+    STM
+      .atomically {
+        dataSources.get(id)
+      }
+      .someOrFail(new NoSuchElementException(s"Data source not found: $id"))
 }
 
 object DataSourceRegistry {
