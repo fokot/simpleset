@@ -43,20 +43,20 @@ INSERT INTO monthly_data (year, month, sales, revenue) VALUES
     (2024, 'November', 102000.00, 265000.00),
     (2024, 'December', 110000.00, 285000.00);
 
--- Insert some data for 2023 for comparison (optional)
+-- Insert some data for 2023 for comparison (with up-and-down pattern)
 INSERT INTO monthly_data (year, month, sales, revenue) VALUES
-    (2023, 'January', 38000.00, 105000.00),
-    (2023, 'February', 42000.00, 115000.00),
-    (2023, 'March', 48000.00, 128000.00),
-    (2023, 'April', 51000.00, 138000.00),
-    (2023, 'May', 55000.00, 148000.00),
-    (2023, 'June', 60000.00, 160000.00),
-    (2023, 'July', 63000.00, 172000.00),
-    (2023, 'August', 68000.00, 182000.00),
-    (2023, 'September', 72000.00, 195000.00),
-    (2023, 'October', 78000.00, 208000.00),
-    (2023, 'November', 85000.00, 222000.00),
-    (2023, 'December', 92000.00, 238000.00);
+    (2023, 'January', 55000.00, 145000.00),
+    (2023, 'February', 62000.00, 165000.00),
+    (2023, 'March', 70000.00, 185000.00),
+    (2023, 'April', 58000.00, 155000.00),
+    (2023, 'May', 48000.00, 130000.00),
+    (2023, 'June', 42000.00, 115000.00),
+    (2023, 'July', 52000.00, 140000.00),
+    (2023, 'August', 65000.00, 175000.00),
+    (2023, 'September', 78000.00, 205000.00),
+    (2023, 'October', 68000.00, 180000.00),
+    (2023, 'November', 55000.00, 150000.00),
+    (2023, 'December', 72000.00, 190000.00);
 
 -- Insert data for 2004
 INSERT INTO monthly_data (year, month, sales, revenue) VALUES

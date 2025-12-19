@@ -4,12 +4,11 @@ import com.simpleset.dashboard.Backend
 import com.simpleset.datasource.DataSourceRegistry
 import com.simpleset.model.{DashboardVersion, DashboardVersionList, ErrorResponse, GetDashboardDataRequest, SaveDashboardRequest, SuccessResponse}
 import zio.http.codec.PathCodec.path
-import zio.{Chunk, ZIO, ZLayer}
+import zio.{ZIO, ZLayer}
 import zio.http.{RoutePattern, Routes, Status, handler}
-import zio.http.codec.{Doc, PathCodec, QueryCodec}
+import zio.http.codec.{Doc, PathCodec}
 import zio.http.endpoint.Endpoint
 import zio.http.endpoint.openapi.{OpenAPIGen, SwaggerUI}
-import zio.json.{DecoderOps, EncoderOps}
 import zio.json.ast.Json
 import zio.schema.Schema
 import zio.schema.codec.json.*
