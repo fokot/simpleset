@@ -17,6 +17,19 @@ fi
 BASE_URL="$1"
 ENDPOINT="$BASE_URL/dashboards"
 
+# Waiting until server is ready
+while true; do
+  response=$(curl -s -w "\n%{http_code}" "$ENDPOINT")
+  http_code=$(echo "$response" | tail -n1)
+  body=$(echo "$response" | sed '$d')
+  if [ "$http_code" -eq 200 ]; then
+    break
+  else
+    echo "Waiting for server to be ready..."
+    sleep 1
+  fi
+done
+
 echo "Initializing dashboards at $ENDPOINT..."
 echo ""
 
@@ -43,68 +56,105 @@ create_dashboard() {
   fi
 }
 
+
+
 # Analytics Dashboard
 analytics_dashboard='{
-  "id": "analytics-dashboard",
-  "name": "Analytics Dashboard",
-  "description": "Website traffic and user analytics",
-  "layout": {
-    "type": "grid",
-    "columns": 12,
-    "rowHeight": 100
-  },
-  "theme": {
-    "name": "analytics",
-    "backgroundColor": "#ffffff",
-    "primaryColor": "#667eea",
-    "secondaryColor": "#764ba2",
-    "fontFamily": "Inter, system-ui, sans-serif",
-    "borderRadius": 8,
-    "spacing": 16
-  },
-  "sharing": {
-    "isPublic": true,
-    "allowedUsers": []
-  },
-  "widgets": [
-    {
-      "id": "traffic-trend-chart",
-      "title": "Traffic Trend (Auto-Loaded)",
-      "position": {
-        "x": 0,
-        "y": 0,
-        "width": 8,
-        "height": 4
-      },
-      "config": {
-        "type": "chart",
-        "dataBinding": {
-          "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "analytics-db"
-        }
-      },
-      "visible": true
-    },
-    {
-      "id": "device-breakdown-chart",
-      "title": "Device Breakdown (Auto-Loaded)",
-      "position": {
-        "x": 8,
-        "y": 0,
-        "width": 4,
-        "height": 4
-      },
-      "config": {
-        "type": "chart",
-        "dataBinding": {
-          "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = 2024 LIMIT 3",
-          "dataSourceId": "analytics-db"
-        }
-      },
-      "visible": true
-    }
-  ]
-}'
+                       "id": "analytics-dashboard",
+                       "name": "Analytics Dashboard",
+                       "description": "Website traffic and user analytics",
+                       "layout": {
+                         "type": "grid",
+                         "columns": 12,
+                         "rowHeight": 100
+                       },
+                       "theme": {
+                         "name": "analytics",
+                         "backgroundColor": "#ffffff",
+                         "primaryColor": "#667eea",
+                         "secondaryColor": "#764ba2",
+                         "fontFamily": "Inter, system-ui, sans-serif",
+                         "borderRadius": 8,
+                         "spacing": 16
+                       },
+                       "sharing": {
+                         "isPublic": true,
+                         "allowedUsers": []
+                       },
+                       "parameters": [
+                         {
+                           "name": "year",
+                           "type": "number",
+                           "defaultValue": 2024,
+                           "required": false,
+                           "description": "Year to filter data"
+                         }
+                       ],
+                       "widgets": [
+                         {
+                           "id": "year-filter",
+                           "title": "Year Filter",
+                           "position": {
+                             "x": 0,
+                             "y": 0,
+                             "width": 12,
+                             "height": 1
+                           },
+                           "config": {
+                             "type": "filter",
+                             "filterType": "dropdown",
+                             "label": "Select Year",
+                             "parameter": "year",
+                             "options": [
+                               {"label": "2003", "value": 2003},
+                               {"label": "2004", "value": 2004},
+                               {"label": "2023", "value": 2023},
+                               {"label": "2024", "value": 2024}
+                             ],
+                             "defaultValue": 2024,
+                             "targetWidgetIds": ["traffic-trend-chart", "device-breakdown-chart"]
+                           },
+                           "visible": true
+                         },
+                         {
+                           "id": "traffic-trend-chart",
+                           "title": "Traffic Trend (Auto-Loaded)",
+                           "position": {
+                             "x": 0,
+                             "y": 1,
+                             "width": 8,
+                             "height": 4
+                           },
+                           "config": {
+                             "type": "chart",
+                             "dataBinding": {
+                               "sql": "SELECT month, sales AS visitors, revenue AS pageviews FROM monthly_data WHERE year = {{year}}",
+                               "dataSourceId": "analytics-db"
+                             }
+                           },
+                           "visible": true
+                         },
+                         {
+                           "id": "device-breakdown-chart",
+                           "title": "Device Breakdown (Auto-Loaded)",
+                           "position": {
+                             "x": 8,
+                             "y": 1,
+                             "width": 4,
+                             "height": 4
+                           },
+                           "config": {
+                             "type": "chart",
+                             "id": "chart-001",
+                             "dataBinding": {
+                               "sql": "SELECT month AS device, sales AS usage FROM monthly_data WHERE year = {{year}} LIMIT 3",
+                               "dataSourceId": "analytics-db"
+                             }
+                           },
+                           "visible": true
+                         }
+                       ]
+                     }'
 
 # Sales Dashboard
 sales_dashboard='{
@@ -143,7 +193,7 @@ sales_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month, sales, revenue FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "sales-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -161,7 +211,7 @@ sales_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS region, sales FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "sales-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -206,7 +256,7 @@ operations_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS time, sales AS server1, revenue AS server2 FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "operations-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -251,7 +301,7 @@ financial_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month AS quarter, sales AS revenue, revenue AS expenses FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "financial-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true
@@ -269,7 +319,7 @@ financial_dashboard='{
         "type": "chart",
         "dataBinding": {
           "sql": "SELECT month, revenue AS cashFlow FROM monthly_data WHERE year = 2024",
-          "dataSourceId": "financial-db"
+          "dataSourceId": "analytics-db"
         }
       },
       "visible": true

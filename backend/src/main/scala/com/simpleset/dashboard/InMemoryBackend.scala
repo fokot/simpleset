@@ -69,3 +69,6 @@ object InMemoryBackend:
       nameIndex <- TMap.empty[String, Long]
       nextIdRef <- TRef.make(1L)
     } yield new InMemoryBackend(storage, nameIndex, nextIdRef)).commit
+  
+  val layer: ZLayer[Any, Nothing, InMemoryBackend] =
+    ZLayer.fromZIO(make)
