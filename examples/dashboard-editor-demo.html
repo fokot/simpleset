@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Editor - Interactive Builder</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            background: #f5f5f5;
+            overflow: hidden;
+        }
+
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 16px 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .app-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin: 4px 0 0 0;
+        }
+
+        .header-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 8px;
+            padding: 12px 20px;
+            backdrop-filter: blur(10px);
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+        }
+
+        .info-icon {
+            font-size: 1.2rem;
+        }
+
+        .editor-wrapper {
+            flex: 1;
+            overflow: hidden;
+        }
+
+        dashboard-editor {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+
+        .instructions {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+            max-width: 320px;
+            z-index: 100;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .instructions-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .instructions-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+            padding: 4px;
+            line-height: 1;
+        }
+
+        .close-btn:hover {
+            color: #1a1a1a;
+        }
+
+        .instructions-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .instructions-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85rem;
+            color: #555;
+            display: flex;
+            align-items: start;
+            gap: 8px;
+        }
+
+        .instructions-list li:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .feature-highlight {
+            background: #f8f9fa;
+            border-left: 3px solid #667eea;
+            padding: 12px;
+            margin-top: 12px;
+            border-radius: 4px;
+        }
+
+        .feature-highlight-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #667eea;
+            margin: 0 0 6px 0;
+        }
+
+        .feature-highlight-text {
+            font-size: 0.75rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="header-content">
+                <div>
+                    <h1 class="app-title">
+                        🎨 Dashboard Editor
+                        <span class="header-badge">Interactive Builder</span>
+                    </h1>
+                    <p class="app-subtitle">Create beautiful dashboards with drag & drop</p>
+                </div>
+                <div class="info-panel">
+                    <div class="info-item">
+                        <span class="info-icon">💾</span>
+                        <span>In-Memory Only</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">🔄</span>
+                        <span>No Persistence</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-icon">⚡</span>
+                        <span>Real-time Preview</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="editor-wrapper">
+            <dashboard-editor id="dashboard-editor"></dashboard-editor>
+        </div>
+
+        <div class="instructions" id="instructions">
+            <div class="instructions-header">
+                <h3 class="instructions-title">📖 Quick Guide</h3>
+                <button class="close-btn" onclick="closeInstructions()">✕</button>
+            </div>
+            <ul class="instructions-list">
+                <li>
+                    <span class="step-number">1</span>
+                    <span>Drag widgets from the left sidebar onto the canvas</span>
+                </li>
+                <li>
+                    <span class="step-number">2</span>
+                    <span>Move widgets by dragging them to new positions</span>
+                </li>
+                <li>
+                    <span class="step-number">3</span>
+                    <span>Click on a widget to select it</span>
+                </li>
+                <li>
+                    <span class="step-number">4</span>
+                    <span>Hover over widgets to see delete button</span>
+                </li>
+                <li>
+                    <span class="step-number">5</span>
+                    <span>Click "Export Config" to see the dashboard JSON</span>
+                </li>
+            </ul>
+            <div class="feature-highlight">
+                <h4 class="feature-highlight-title">💡 Note</h4>
+                <p class="feature-highlight-text">
+                    All changes are stored in memory only. Refreshing the page will reset the dashboard.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import the dashboard editor component
+        import '../frontend/dist/dashboard-editor-component.js';
+
+        // Wait for the component to be defined
+        customElements.whenDefined('dashboard-editor').then(() => {
+            console.log('Dashboard Editor loaded successfully!');
+            console.log('Start building your dashboard by dragging widgets from the sidebar.');
+        });
+
+        // Global function to close instructions
+        window.closeInstructions = function() {
+            const instructions = document.getElementById('instructions');
+            if (instructions) {
+                instructions.classList.add('hidden');
+            }
+        };
+
+        // Auto-hide instructions after 10 seconds
+        setTimeout(() => {
+            const instructions = document.getElementById('instructions');
+            if (instructions && !instructions.classList.contains('hidden')) {
+                instructions.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                instructions.style.opacity = '0';
+                instructions.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    instructions.classList.add('hidden');
+                }, 500);
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
+

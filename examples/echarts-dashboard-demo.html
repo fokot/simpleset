@@ -301,6 +301,8 @@
             ]
         };
 
+
+
         // Analytics Dashboard Data
         const analyticsData = {
             "visitors-metric": {
@@ -710,34 +712,59 @@
         window.loadAnalyticsDashboard = function() {
             updateActiveButton(0);
             const dashboard = document.getElementById('echarts-dashboard');
+            const debugStatus = document.getElementById('debug-status');
+
             console.log('Loading analytics dashboard...');
-            console.log('Dashboard element:', dashboard);
-            console.log('Dashboard config:', analyticsDashboard);
-            console.log('Dashboard data:', analyticsData);
+            debugStatus.textContent = 'Loading analytics dashboard...';
+
+            // Load dashboard structure and data
             dashboard.dashboard = analyticsDashboard;
             dashboard.data = analyticsData;
+
+            debugStatus.textContent = 'Analytics dashboard loaded!';
             console.log('Dashboard loaded!');
         }
 
         window.loadSalesDashboard = function() {
             updateActiveButton(1);
             const dashboard = document.getElementById('echarts-dashboard');
+            const debugStatus = document.getElementById('debug-status');
+
+            debugStatus.textContent = 'Loading sales dashboard...';
+
+            // Load dashboard structure and data
             dashboard.dashboard = salesDashboard;
             dashboard.data = salesData;
+
+            debugStatus.textContent = 'Sales dashboard loaded!';
         }
 
         window.loadOperationsDashboard = function() {
             updateActiveButton(2);
             const dashboard = document.getElementById('echarts-dashboard');
+            const debugStatus = document.getElementById('debug-status');
+
+            debugStatus.textContent = 'Loading operations dashboard...';
+
+            // Load dashboard structure and data
             dashboard.dashboard = operationsDashboard;
             dashboard.data = operationsData;
+
+            debugStatus.textContent = 'Operations dashboard loaded!';
         }
 
         window.loadFinancialDashboard = function() {
             updateActiveButton(3);
             const dashboard = document.getElementById('echarts-dashboard');
+            const debugStatus = document.getElementById('debug-status');
+
+            debugStatus.textContent = 'Loading financial dashboard...';
+
+            // Load dashboard structure and data
             dashboard.dashboard = financialDashboard;
             dashboard.data = financialData;
+
+            debugStatus.textContent = 'Financial dashboard loaded!';
         }
 
         function updateActiveButton(activeIndex) {

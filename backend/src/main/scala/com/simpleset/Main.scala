@@ -43,7 +43,7 @@ object Main extends ZIOAppDefault:
 
       process <- Server.serve(httpApp).fork
       // wait until server is up by checking port
-      
+
       _ <- ZIO.sleep(5.seconds)
       result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode
       _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
