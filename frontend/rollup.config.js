@@ -47,5 +47,32 @@ export default [
         }
       })
     ]
+  },
+  // Element Editor component (new)
+  {
+    input: 'src/element-editor-component.ts',
+    output: {
+      file: 'dist/element-editor-component.js',
+      format: 'es',
+      sourcemap: true
+    },
+    plugins: [
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production'),
+        preventAssignment: true
+      }),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false
+      }),
+      terser({
+        compress: {
+          drop_console: false
+        }
+      })
+    ]
   }
 ];

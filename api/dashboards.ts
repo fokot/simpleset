@@ -72,12 +72,12 @@ export const WidgetStyleSchema = z.object({
  * Text widget configuration
  */
 export const TextWidgetConfigSchema = z.object({
-  content: z.string(),
-  fontSize: z.number().min(8).max(72).default(14),
-  fontWeight: z.enum(['normal', 'bold', 'bolder', 'lighter']).default('normal'),
-  textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left'),
-  color: ColorSchema.optional(),
-});
+  content: z.string().describe('The text content to display'),
+  fontSize: z.number().min(8).max(72).default(14).describe('Font size in pixels'),
+  fontWeight: z.enum(['normal', 'bold', 'bolder', 'lighter']).default('normal').describe('Font weight'),
+  textAlign: z.enum(['left', 'center', 'right', 'justify']).default('left').describe('Text alignment'),
+  color: ColorSchema.optional().describe('Text color'),
+}).describe('Configuration for display text widgets');
 
 /**
  * Image widget configuration
