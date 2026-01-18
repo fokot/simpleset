@@ -25,9 +25,28 @@ export class TextWidget extends LitElement {
   @property({ type: Object })
   config?: TextWidgetConfig;
 
+  @property({ type: Boolean })
+  editable = false;
+
+  private _handleInput(e: Event) {
+    const target = e.target as HTMLElement;
+    this.dispatchEvent(new CustomEvent('text-change', {
+      detail: { content: target.innerText },
+      bubbles: true,
+      composed: true
+    }));
+  }
+
+  private _handleBlur() {
+    this.dispatchEvent(new CustomEvent('edit-blur', {
+      bubbles: true,
+      composed: true
+    }));
+  }
+
   render() {
     if (!this.config) {
-        return html`<div>No configuration</div>`;
+      return html`<div>No configuration</div>`;
     }
 
     const style = `
@@ -35,10 +54,19 @@ export class TextWidget extends LitElement {
       font-weight: ${this.config.fontWeight || 'normal'};
       text-align: ${this.config.textAlign || 'left'};
       color: ${this.config.color || 'inherit'};
+      outline: ${this.editable ? '2px dashed #4dabf7' : 'none'};
+      cursor: ${this.editable ? 'text' : 'inherit'};
     `;
 
     return html`
-      <div class="text-content" style="${style}">
+      <div 
+        class="text-content" 
+        style="${style}"
+        ?contenteditable="${this.editable}"
+        @input="${this._handleInput}"
+        @blur="${this._handleBlur}"
+        @mousedown="${(e: Event) => e.stopPropagation()}"
+      >
         ${this.config.content}
       </div>
     `;

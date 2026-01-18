@@ -195,6 +195,9 @@ export class ElementEditorComponent extends LitElement {
   resizingWidgetId: string | null = null;
 
   @state()
+  editingWidgetId: string | null = null;
+
+  @state()
   private _columns = 40;
 
   @state()
@@ -387,6 +390,22 @@ export class ElementEditorComponent extends LitElement {
   // --- Dragging existing widgets Logic ---
   // (Simple implementation: click and hold anywhere on widget to drag)
   // To avoid conflict with resize/delete, only trigger if target is not them.
+
+  private _handleDoubleClick(e: MouseEvent, widget: DashboardWidget) {
+    if (widget.config.type === 'text') {
+      e.stopPropagation();
+      this.editingWidgetId = widget.id;
+      this.selectedWidgetId = widget.id;
+    }
+  }
+
+  private _handleTextChange(widgetId: string, e: CustomEvent) {
+    this._updateWidgetConfig(widgetId, ['config', 'content'], e.detail.content);
+  }
+
+  private _handleEditBlur() {
+    this.editingWidgetId = null;
+  }
 
   private _startWidgetDrag(e: DragEvent, widget: DashboardWidget) {
     // Using HTML5 drag/drop for sidebar, but for grid items, mouse events might be smoother for precise grid snapping.
@@ -615,13 +634,13 @@ export class ElementEditorComponent extends LitElement {
            @click=${(e: MouseEvent) => this._selectWidget(e, widget.id)}>
            
            <button class="delete-btn" @click=${(e: MouseEvent) => this._deleteWidget(e, widget.id)} title="Remove">×</button>
-           
-           <!-- Content Preview -->
-           <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden; padding: 8px;">
-              ${this._renderWidgetContent(widget)}
-           </div>
+                      <!-- Content Preview -->
+            <div style="width: 100%; height: 100%; pointer-events: none; overflow: hidden; padding: 8px;"
+                 @dblclick=${(e: MouseEvent) => this._handleDoubleClick(e, widget)}>
+               ${this._renderWidgetContent(widget)}
+            </div>
 
-           <div class="resize-handle" @mousedown=${(e: MouseEvent) => this._startResize(e, widget)}></div>
+            <div class="resize-handle" @mousedown=${(e: MouseEvent) => this._startResize(e, widget)}></div>
       </div>
     `;
   }
@@ -629,7 +648,14 @@ export class ElementEditorComponent extends LitElement {
   private _renderWidgetContent(widget: DashboardWidget) {
     switch (widget.config.type) {
       case 'text':
-        return html`<text-widget .config=${widget.config.config}></text-widget>`;
+        return html`
+          <text-widget 
+            .config=${widget.config.config}
+            .editable=${this.editingWidgetId === widget.id}
+            style="pointer-events: auto"
+            @text-change=${(e: CustomEvent) => this._handleTextChange(widget.id, e)}
+            @edit-blur=${this._handleEditBlur}
+          ></text-widget>`;
       case 'chart':
         return html`<div style="display:flex;align-items:center;justify-content:center;height:100%;background:#e3f2fd;color:#1976d2">Chart Preview</div>`;
       default:
