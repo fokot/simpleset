@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
 import './editor-toolbar.js';
+import './editor-canvas.js';
 
 @customElement('dashboard-editor-component')
 export class DashboardEditorComponent extends LitElement {
@@ -42,11 +43,6 @@ export class DashboardEditorComponent extends LitElement {
       padding: 16px;
       box-sizing: border-box;
       overflow: auto;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #999;
-      font-size: 1.2rem;
     }
 
     .sidebar-title {
@@ -73,7 +69,7 @@ export class DashboardEditorComponent extends LitElement {
           <div class="sidebar-content">Drag widgets here...</div>
         </div>
         <div class="canvas-area">
-          Canvas Area
+          <editor-canvas></editor-canvas>
         </div>
         <div class="sidebar-right">
           <div class="sidebar-title">Configuration</div>
