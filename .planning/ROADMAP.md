@@ -31,8 +31,8 @@ A visual drag-and-drop editor enabling users to create dashboards without code. 
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — Editor shell with toolbar and 3-column layout
-- [ ] 01-02-PLAN.md — Grid canvas with visible 12-column grid lines
+- [x] 01-01-PLAN.md — Editor shell with toolbar and 3-column layout
+- [x] 01-02-PLAN.md — Grid canvas with visible 12-column grid lines
 
 **Success Criteria:**
 1. User can navigate to `/editor` and see the editor UI (toolbar, canvas area, empty sidebar panels)
@@ -158,13 +158,13 @@ Plans:
 
 | Phase | Status | Requirements | Completion |
 |-------|--------|--------------|------------|
-| 1 - Core Editor Framework | Not started | 0/2 | ░░░░░░░░░░ 0% |
+| 1 - Core Editor Framework | ✅ Complete | 2/2 | ██████████ 100% |
 | 2 - Widget Interaction | Not started | 0/3 | ░░░░░░░░░░ 0% |
 | 3 - Configuration & Persistence | Not started | 0/4 | ░░░░░░░░░░ 0% |
 | 4 - Undo/Redo & Polish | Not started | 0/1 | ░░░░░░░░░░ 0% |
 | 5 - AI Integration | Not started | 0/4 | ░░░░░░░░░░ 0% |
 
-**Overall:** 0/14 requirements complete (0%)
+**Overall:** 2/14 requirements complete (14%)
 
 ---
 *Last updated: 2026-01-29*
