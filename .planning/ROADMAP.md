@@ -28,6 +28,12 @@ A visual drag-and-drop editor enabling users to create dashboards without code. 
 - EDITOR-01: User can open a blank canvas editor
 - LAYOUT-01: Canvas has grid-based layout with snap-to-grid
 
+**Plans:** 2 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Editor shell with toolbar and 3-column layout
+- [ ] 01-02-PLAN.md — Grid canvas with visible 12-column grid lines
+
 **Success Criteria:**
 1. User can navigate to `/editor` and see the editor UI (toolbar, canvas area, empty sidebar panels)
 2. Canvas displays visible grid lines indicating the 12-column layout structure
