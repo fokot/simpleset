@@ -27,7 +27,7 @@ export class EditorCanvas extends LitElement {
       box-sizing: border-box;
       position: relative;
       /* Square grid pattern using CSS background */
-      --cell-size: 80px;
+      --cell-size: 20px;
       --grid-color: #e0e0e0;
       background-image:
         linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
