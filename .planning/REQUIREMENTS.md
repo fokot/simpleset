@@ -56,20 +56,20 @@ Explicitly excluded:
 
 | Requirement | Phase | Plan | Status |
 |-------------|-------|------|--------|
-| EDITOR-01 | — | — | Not started |
-| EDITOR-02 | — | — | Not started |
-| EDITOR-03 | — | — | Not started |
-| EDITOR-04 | — | — | Not started |
-| EDITOR-05 | — | — | Not started |
-| EDITOR-06 | — | — | Not started |
-| EDITOR-07 | — | — | Not started |
-| EDITOR-08 | — | — | Not started |
-| AI-01 | — | — | Not started |
-| AI-02 | — | — | Not started |
-| AI-03 | — | — | Not started |
-| LAYOUT-01 | — | — | Not started |
-| LAYOUT-02 | — | — | Not started |
-| LAYOUT-03 | — | — | Not started |
+| EDITOR-01 | 1 | — | Not started |
+| EDITOR-02 | 2 | — | Not started |
+| EDITOR-03 | 2 | — | Not started |
+| EDITOR-04 | 2 | — | Not started |
+| EDITOR-05 | 3 | — | Not started |
+| EDITOR-06 | 3 | — | Not started |
+| EDITOR-07 | 4 | — | Not started |
+| EDITOR-08 | 5 | — | Not started |
+| AI-01 | 5 | — | Not started |
+| AI-02 | 5 | — | Not started |
+| AI-03 | 5 | — | Not started |
+| LAYOUT-01 | 1 | — | Not started |
+| LAYOUT-02 | 3 | — | Not started |
+| LAYOUT-03 | 3 | — | Not started |
 
 ---
 *Last updated: 2026-01-29*
