@@ -47,5 +47,32 @@ export default [
         }
       })
     ]
+  },
+  // Dashboard editor component
+  {
+    input: 'src/editor/index.ts',
+    output: {
+      file: 'dist/dashboard-editor-component.js',
+      format: 'es',
+      sourcemap: true
+    },
+    plugins: [
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production'),
+        preventAssignment: true
+      }),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false
+      }),
+      terser({
+        compress: {
+          drop_console: false
+        }
+      })
+    ]
   }
 ];
