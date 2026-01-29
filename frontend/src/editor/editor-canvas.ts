@@ -16,16 +16,9 @@ export class EditorCanvas extends LitElement {
     :host {
       display: block;
       position: relative;
-      min-height: 600px;
+      min-height: 100%;
       background: #ffffff;
       box-sizing: border-box;
-    }
-
-    .grid-container {
-      min-height: 600px;
-      padding: 16px;
-      box-sizing: border-box;
-      position: relative;
       /* Square grid pattern using CSS background */
       --cell-size: 20px;
       --grid-color: #e0e0e0;
@@ -42,16 +35,16 @@ export class EditorCanvas extends LitElement {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 16px;
-      min-height: 568px; /* 600px - 2*16px padding */
+      padding: 16px;
+      min-height: 100%;
+      box-sizing: border-box;
     }
   `;
 
   render() {
     return html`
-      <div class="grid-container">
-        <div class="grid-content">
-          <slot></slot>
-        </div>
+      <div class="grid-content">
+        <slot></slot>
       </div>
     `;
   }

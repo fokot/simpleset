@@ -45,6 +45,11 @@ export class DashboardEditorComponent extends LitElement {
       overflow: auto;
     }
 
+    editor-canvas {
+      display: block;
+      min-height: calc(100vh - 48px - 32px); /* viewport - toolbar - padding */
+    }
+
     .sidebar-title {
       font-size: 0.875rem;
       font-weight: 600;
