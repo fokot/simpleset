@@ -54,6 +54,17 @@ This is a **brownfield project** - adding a new editor to an existing dashboard 
 - Break existing dashboard-component rendering
 - Change existing API contracts (backward compatibility)
 
+## Current Milestone: v1.0 WYSIWYG Dashboard Editor
+
+**Goal:** Enable users to visually create dashboards with drag-and-drop widgets, visual configuration, and AI assistance - without writing code.
+
+**Target features:**
+- Visual canvas editor with drag-and-drop widget placement
+- Widget configuration panel with property editing
+- AI-powered chart generation and layout suggestions
+- Grid-based layout with snap-to-grid
+- Dashboard save/load with undo/redo support
+
 ## Requirements
 
 ### Validated
@@ -129,5 +140,5 @@ These are the new capabilities to build:
 - Multi-user collaboration features
 
 ---
-*Last updated: 2026-01-29 after initialization*
+*Last updated: 2026-01-29 — Milestone v1.0 started*
 
