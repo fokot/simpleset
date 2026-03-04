@@ -21,11 +21,38 @@ export default [
       })
     ]
   },
-  // Dashboard component (new)
+  // Dashboard component
   {
     input: 'src/dashboard-component.ts',
     output: {
       file: 'dist/dashboard-component.js',
+      format: 'es',
+      sourcemap: true
+    },
+    plugins: [
+      replace({
+        'process.env.NODE_ENV': JSON.stringify('production'),
+        preventAssignment: true
+      }),
+      typescript({
+        tsconfig: './tsconfig.json'
+      }),
+      nodeResolve({
+        browser: true,
+        preferBuiltins: false
+      }),
+      terser({
+        compress: {
+          drop_console: false
+        }
+      })
+    ]
+  },
+  // Datasource manager component
+  {
+    input: 'src/datasource-manager.ts',
+    output: {
+      file: 'dist/datasource-manager.js',
       format: 'es',
       sourcemap: true
     },
