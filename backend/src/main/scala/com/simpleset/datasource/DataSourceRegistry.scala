@@ -14,6 +14,16 @@ class DataSourceRegistry(dataSources: TMap[String, DataSource]) {
     STM.atomically {
       dataSources.get(id)
     }.someOrFail(new NoSuchElementException(s"Data source not found: $id"))
+
+  def unregister(id: String): Task[Unit] =
+    STM.atomically {
+      dataSources.delete(id)
+    }
+
+  def getAll: Task[Map[String, DataSource]] =
+    STM.atomically {
+      dataSources.toMap
+    }
 }
 
 object DataSourceRegistry {
