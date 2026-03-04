@@ -2,8 +2,6 @@ import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type {
   DataSource,
-  DatabaseConfig,
-  DataSourceConfig,
   CreateDataSourceRequest,
   TestConnectionRequest,
   TestConnectionResponse,
@@ -207,7 +205,7 @@ export class DatasourceManager extends LitElement {
   @state() private _view: ViewMode = 'list';
   @state() private _datasources: DataSource[] = [];
   @state() private _loading = false;
-  @state() private _editingId: string | null = null;
+  @state() private _editingId: number | null = null;
   @state() private _deleteTarget: DataSource | null = null;
   @state() private _testResult: TestConnectionResponse | null = null;
   @state() private _testLoading = false;
@@ -241,7 +239,7 @@ export class DatasourceManager extends LitElement {
       const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      this._datasources = json.data?.items ?? json.data ?? json.items ?? [];
+      this._datasources = Array.isArray(json) ? json : json.data ?? [];
     } catch (e: any) {
       this._showToast(`Failed to load datasources: ${e.message}`, 'error');
     } finally {
@@ -271,15 +269,12 @@ export class DatasourceManager extends LitElement {
     this._editingId = ds.id;
     this._formName = ds.name;
     this._formDescription = ds.description ?? '';
-    const cfg = ds.config?.config as DatabaseConfig | undefined;
-    if (cfg) {
-      this._formHost = cfg.host ?? 'localhost';
-      this._formPort = cfg.port ?? 5432;
-      this._formDatabase = cfg.database ?? '';
-      this._formUsername = cfg.username ?? '';
-      this._formPassword = cfg.password ?? '';
-      this._formSsl = cfg.ssl ?? false;
-    }
+    this._formHost = ds.host ?? 'localhost';
+    this._formPort = ds.port ?? 5432;
+    this._formDatabase = ds.database ?? '';
+    this._formUsername = ds.username ?? '';
+    this._formPassword = ''; // password not returned by backend
+    this._formSsl = ds.ssl ?? false;
     this._testResult = null;
     this._view = 'form';
   }
@@ -295,15 +290,12 @@ export class DatasourceManager extends LitElement {
       description: this._formDescription || undefined,
       type: 'postgresql',
       config: {
-        type: 'postgresql',
-        config: {
-          host: this._formHost,
-          port: this._formPort,
-          database: this._formDatabase,
-          username: this._formUsername,
-          password: this._formPassword,
-          ssl: this._formSsl,
-        },
+        host: this._formHost,
+        port: this._formPort,
+        database: this._formDatabase,
+        username: this._formUsername,
+        password: this._formPassword,
+        ssl: this._formSsl,
       },
     };
   }
@@ -314,7 +306,14 @@ export class DatasourceManager extends LitElement {
     try {
       const body: TestConnectionRequest = {
         type: 'postgresql',
-        config: this._buildRequest().config,
+        config: {
+          host: this._formHost,
+          port: this._formPort,
+          database: this._formDatabase,
+          username: this._formUsername,
+          password: this._formPassword,
+          ssl: this._formSsl,
+        },
       };
       const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
         method: 'POST',
@@ -420,11 +419,8 @@ export class DatasourceManager extends LitElement {
             <div class="ds-info">
               <div class="ds-name">${ds.name}</div>
               <div class="ds-meta">
-                <span>
-                  <span class="status-dot status-${ds.status}"></span>
-                  ${ds.status}
-                </span>
                 <span>${ds.type}</span>
+                <span>${ds.host}:${ds.port}/${ds.database}</span>
                 ${ds.description ? html`<span>${ds.description}</span>` : nothing}
               </div>
             </div>
