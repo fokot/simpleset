@@ -5,7 +5,7 @@ import type {
   CreateDataSourceRequest,
   TestConnectionRequest,
   TestConnectionResponse,
-} from './types/datasource-types.js';
+} from '../../api/datasources.js';
 
 type ViewMode = 'list' | 'form';
 
@@ -269,12 +269,12 @@ export class DatasourceManager extends LitElement {
     this._editingId = ds.id;
     this._formName = ds.name;
     this._formDescription = ds.description ?? '';
-    this._formHost = ds.host ?? 'localhost';
-    this._formPort = ds.port ?? 5432;
-    this._formDatabase = ds.database ?? '';
-    this._formUsername = ds.username ?? '';
+    this._formHost = ds.config.host ?? 'localhost';
+    this._formPort = ds.config.port ?? 5432;
+    this._formDatabase = ds.config.database ?? '';
+    this._formUsername = ds.config.username ?? '';
     this._formPassword = ''; // password not returned by backend
-    this._formSsl = ds.ssl ?? false;
+    this._formSsl = ds.config.ssl ?? false;
     this._testResult = null;
     this._view = 'form';
   }
@@ -290,12 +290,15 @@ export class DatasourceManager extends LitElement {
       description: this._formDescription || undefined,
       type: 'postgresql',
       config: {
-        host: this._formHost,
-        port: this._formPort,
-        database: this._formDatabase,
-        username: this._formUsername,
-        password: this._formPassword,
-        ssl: this._formSsl,
+        type: 'postgresql',
+        config: {
+          host: this._formHost,
+          port: this._formPort,
+          database: this._formDatabase,
+          username: this._formUsername,
+          password: this._formPassword,
+          ssl: this._formSsl,
+        },
       },
     };
   }
@@ -307,12 +310,15 @@ export class DatasourceManager extends LitElement {
       const body: TestConnectionRequest = {
         type: 'postgresql',
         config: {
-          host: this._formHost,
-          port: this._formPort,
-          database: this._formDatabase,
-          username: this._formUsername,
-          password: this._formPassword,
-          ssl: this._formSsl,
+          type: 'postgresql',
+          config: {
+            host: this._formHost,
+            port: this._formPort,
+            database: this._formDatabase,
+            username: this._formUsername,
+            password: this._formPassword,
+            ssl: this._formSsl,
+          },
         },
       };
       const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
@@ -420,7 +426,7 @@ export class DatasourceManager extends LitElement {
               <div class="ds-name">${ds.name}</div>
               <div class="ds-meta">
                 <span>${ds.type}</span>
-                <span>${ds.host}:${ds.port}/${ds.database}</span>
+                <span>${ds.config.host}:${ds.config.port}/${ds.config.database}</span>
                 ${ds.description ? html`<span>${ds.description}</span>` : nothing}
               </div>
             </div>
