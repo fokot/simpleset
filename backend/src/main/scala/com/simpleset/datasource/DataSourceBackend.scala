@@ -2,7 +2,7 @@ package com.simpleset.datasource
 
 import com.augustnagro.magnum.magzio.*
 import com.augustnagro.magnum.*
-import com.simpleset.model.{DataSourceResponse, DatabaseConnectionConfig}
+import com.simpleset.model.{DataSourceResponse, DataSourceResponseConfig, DatabaseConnectionConfig}
 import zio.*
 
 import java.time.Instant
@@ -31,11 +31,13 @@ case class DataSourceEntity(
       name = name,
       description = description,
       `type` = dsType,
-      host = host,
-      port = port,
-      database = database,
-      username = username,
-      ssl = ssl,
+      config = DataSourceResponseConfig(
+        host = host,
+        port = port,
+        database = database,
+        username = username,
+        ssl = ssl
+      ),
       status = status,
       errorMessage = errorMessage,
       createdAt = createdAt,

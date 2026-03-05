@@ -144,6 +144,17 @@ object model {
   object UpdateDataSourceRequest:
     given Schema[UpdateDataSourceRequest] = DeriveSchema.gen[UpdateDataSourceRequest]
 
+  case class DataSourceResponseConfig(
+    host: String,
+    port: Int,
+    database: String,
+    username: String,
+    ssl: Boolean
+  )
+
+  object DataSourceResponseConfig:
+    given Schema[DataSourceResponseConfig] = DeriveSchema.gen[DataSourceResponseConfig]
+
   case class DataSourceResponse(
     @description("Datasource ID")
     id: Long,
@@ -153,16 +164,8 @@ object model {
     description: Option[String],
     @description("Type of the datasource")
     `type`: String,
-    @description("Host")
-    host: String,
-    @description("Port")
-    port: Int,
-    @description("Database name")
-    database: String,
-    @description("Username")
-    username: String,
-    @description("SSL enabled")
-    ssl: Boolean,
+    @description("Connection configuration (without password)")
+    config: DataSourceResponseConfig,
     @description("Connection status")
     status: String,
     @description("Error message if connection failed")
