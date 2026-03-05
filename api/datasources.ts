@@ -2,11 +2,7 @@ import { z } from 'zod';
 import {
   IdSchema,
   TimestampSchema,
-  AuditTrailSchema,
   SharingConfigSchema,
-  PaginationParamsSchema,
-  PaginatedResponseSchema,
-  SearchParamsSchema,
 } from './common.js';
 
 // ============================================================================
@@ -44,10 +40,6 @@ export const DatabaseConfigSchema = z.object({
   username: z.string().min(1),
   password: z.string().min(1),
   ssl: z.boolean().default(false),
-  connectionTimeout: z.number().int().min(1000).default(30000),
-  queryTimeout: z.number().int().min(1000).default(60000),
-  maxConnections: z.number().int().min(1).max(100).default(10),
-  schema: z.string().optional(),
 });
 
 /**
@@ -171,20 +163,29 @@ export const ConnectionStatusSchema = z.enum([
 ]);
 
 /**
- * Data source schema
+ * Response-specific config without password (matches backend DataSourceResponseConfig)
+ */
+export const DataSourceResponseConfigSchema = z.object({
+  host: z.string(),
+  port: z.number().int(),
+  database: z.string(),
+  username: z.string(),
+  ssl: z.boolean(),
+});
+
+/**
+ * Data source response schema (matches backend DataSourceResponse)
  */
 export const DataSourceSchema = z.object({
-  id: IdSchema,
+  id: z.number(),
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   type: DataSourceTypeSchema,
-  config: DataSourceConfigSchema,
+  config: DataSourceResponseConfigSchema,
   status: ConnectionStatusSchema,
-  lastConnected: TimestampSchema.optional(),
   errorMessage: z.string().optional(),
-  tags: z.array(z.string()).default([]),
-  sharing: SharingConfigSchema,
-  audit: AuditTrailSchema,
+  createdAt: z.string(),
+  updatedAt: z.string(),
 });
 
 // ============================================================================
@@ -225,68 +226,9 @@ export const TestConnectionResponseSchema = z.object({
   success: z.boolean(),
   message: z.string(),
   latency: z.number().optional(),
-  metadata: z.record(z.any()).optional(),
 });
 
-/**
- * Data source list parameters
- */
-export const DataSourceListParamsSchema = PaginationParamsSchema.extend({
-  type: DataSourceTypeSchema.optional(),
-  status: ConnectionStatusSchema.optional(),
-  search: SearchParamsSchema.optional(),
-});
 
-/**
- * Data source list response
- */
-export const DataSourceListResponseSchema = PaginatedResponseSchema(DataSourceSchema);
-
-// ============================================================================
-// Schema Introspection
-// ============================================================================
-
-/**
- * Database table schema
- */
-export const TableSchemaSchema = z.object({
-  name: z.string(),
-  schema: z.string().optional(),
-  columns: z.array(z.object({
-    name: z.string(),
-    type: z.string(),
-    nullable: z.boolean(),
-    primaryKey: z.boolean(),
-    foreignKey: z.object({
-      table: z.string(),
-      column: z.string(),
-    }).optional(),
-    defaultValue: z.any().optional(),
-    comment: z.string().optional(),
-  })),
-  indexes: z.array(z.object({
-    name: z.string(),
-    columns: z.array(z.string()),
-    unique: z.boolean(),
-  })).default([]),
-  rowCount: z.number().int().optional(),
-});
-
-/**
- * Schema introspection response
- */
-export const SchemaIntrospectionResponseSchema = z.object({
-  tables: z.array(TableSchemaSchema),
-  views: z.array(TableSchemaSchema),
-  functions: z.array(z.object({
-    name: z.string(),
-    parameters: z.array(z.object({
-      name: z.string(),
-      type: z.string(),
-    })),
-    returnType: z.string(),
-  })).default([]),
-});
 
 // ============================================================================
 // Type Exports
@@ -299,12 +241,9 @@ export type FileConfig = z.infer<typeof FileConfigSchema>;
 export type CloudConfig = z.infer<typeof CloudConfigSchema>;
 export type DataSourceConfig = z.infer<typeof DataSourceConfigSchema>;
 export type ConnectionStatus = z.infer<typeof ConnectionStatusSchema>;
+export type DataSourceResponseConfig = z.infer<typeof DataSourceResponseConfigSchema>;
 export type DataSource = z.infer<typeof DataSourceSchema>;
 export type CreateDataSourceRequest = z.infer<typeof CreateDataSourceRequestSchema>;
 export type UpdateDataSourceRequest = z.infer<typeof UpdateDataSourceRequestSchema>;
 export type TestConnectionRequest = z.infer<typeof TestConnectionRequestSchema>;
 export type TestConnectionResponse = z.infer<typeof TestConnectionResponseSchema>;
-export type DataSourceListParams = z.infer<typeof DataSourceListParamsSchema>;
-export type DataSourceListResponse = z.infer<typeof DataSourceListResponseSchema>;
-export type TableSchema = z.infer<typeof TableSchemaSchema>;
-export type SchemaIntrospectionResponse = z.infer<typeof SchemaIntrospectionResponseSchema>;

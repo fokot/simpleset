@@ -10,9 +10,6 @@ import {
   UpdateDataSourceRequestSchema,
   TestConnectionRequestSchema,
   TestConnectionResponseSchema,
-  DataSourceListParamsSchema,
-  DataSourceListResponseSchema,
-  SchemaIntrospectionResponseSchema,
 } from './datasources.js';
 import {
   SavedQuerySchema,
@@ -83,10 +80,9 @@ export const dataSourceEndpoints = {
     method: 'GET',
     path: '/api/v1/datasources',
     summary: 'List data sources',
-    description: 'Retrieve a paginated list of data sources with optional filtering',
+    description: 'Retrieve a list of data sources',
     tags: ['datasources'],
-    requestSchema: DataSourceListParamsSchema,
-    responseSchema: SuccessResponseSchema(DataSourceListResponseSchema),
+    responseSchema: SuccessResponseSchema(z.array(DataSourceSchema)),
     errorSchema: ApiErrorSchema,
     statusCodes: {
       success: HttpStatusCodes.OK,
@@ -172,20 +168,6 @@ export const dataSourceEndpoints = {
     },
   },
 
-  // Get schema introspection
-  getSchema: {
-    method: 'GET',
-    path: '/api/v1/datasources/:id/schema',
-    summary: 'Get data source schema',
-    description: 'Retrieve schema information (tables, columns, etc.) from a data source',
-    tags: ['datasources'],
-    responseSchema: SuccessResponseSchema(SchemaIntrospectionResponseSchema),
-    errorSchema: ApiErrorSchema,
-    statusCodes: {
-      success: HttpStatusCodes.OK,
-      error: [HttpStatusCodes.NOT_FOUND, HttpStatusCodes.UNAUTHORIZED],
-    },
-  },
 } as const;
 
 // ============================================================================
