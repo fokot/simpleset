@@ -74,31 +74,42 @@ class DataSourceBackend(xa: TransactorZIO)
   extends Repo[DataSourceCreator, DataSourceEntity, Long]:
 
   def getAll: Task[List[DataSourceEntity]] =
+    ZIO.logDebug("Fetching all datasources from database") *>
     xa.transact {
       findAll.toList
-    }.mapError(e => new RuntimeException(s"Failed to list datasources: ${e.getMessage}", e))
+    }.tap(list => ZIO.logDebug(s"Found ${list.size} datasource(s) in database"))
+      .tapError(e => ZIO.logError(s"Failed to list datasources: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to list datasources: ${e.getMessage}", e))
 
   def getById(id: Long): Task[DataSourceEntity] =
+    ZIO.logDebug(s"Fetching datasource id=$id from database") *>
     xa.transact {
       findById(id) match
         case Some(entity) => entity
         case None => throw new NoSuchElementException(s"Datasource not found with id: $id")
-    }.mapError {
+    }.tapError(e => ZIO.logError(s"Failed to get datasource id=$id: ${e.getMessage}"))
+      .mapError {
       case e: NoSuchElementException => e
       case e => new RuntimeException(s"Failed to get datasource $id: ${e.getMessage}", e)
     }
 
   def create(creator: DataSourceCreator): Task[DataSourceEntity] =
+    ZIO.logDebug(s"Creating datasource '${creator.name}' in database") *>
     xa.transact {
       insertReturning(creator)
-    }.mapError(e => new RuntimeException(s"Failed to create datasource: ${e.getMessage}", e))
+    }.tap(entity => ZIO.logDebug(s"Datasource '${creator.name}' created with id=${entity.id}"))
+      .tapError(e => ZIO.logError(s"Failed to create datasource '${creator.name}': ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to create datasource: ${e.getMessage}", e))
 
   def updateEntity(entity: DataSourceEntity): Task[Unit] =
+    ZIO.logDebug(s"Updating datasource '${entity.name}' (id=${entity.id}) in database") *>
     xa.transact {
       update(entity)
-    }.mapError(e => new RuntimeException(s"Failed to update datasource: ${e.getMessage}", e))
+    }.tapError(e => ZIO.logError(s"Failed to update datasource id=${entity.id}: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to update datasource: ${e.getMessage}", e))
 
   def remove(id: Long): Task[Unit] =
+    ZIO.logDebug(s"Removing datasource id=$id from database") *>
     xa.transact {
       val spec = Spec[DataSourceEntity]
         .where(sql"${DataSourceEntity.table.id} = $id")
@@ -107,7 +118,9 @@ class DataSourceBackend(xa: TransactorZIO)
           delete(findById(id).get)
         case None =>
           throw new NoSuchElementException(s"Datasource not found with id: $id")
-    }.mapError {
+    }.tap(_ => ZIO.logDebug(s"Datasource id=$id removed from database"))
+      .tapError(e => ZIO.logError(s"Failed to delete datasource id=$id: ${e.getMessage}"))
+      .mapError {
       case e: NoSuchElementException => e
       case e => new RuntimeException(s"Failed to delete datasource $id: ${e.getMessage}", e)
     }
@@ -115,6 +128,7 @@ class DataSourceBackend(xa: TransactorZIO)
 object DataSourceBackend:
 
   def createSchema(xa: TransactorZIO): Task[Unit] =
+    ZIO.logDebug("Creating datasource schema if not exists") *>
     xa.transact {
       val createTableSql = sql"""
         CREATE TABLE IF NOT EXISTS data_source_entity (
@@ -136,7 +150,9 @@ object DataSourceBackend:
       """
       createTableSql.update.run()
       ()
-    }.mapError(e => new RuntimeException(s"Failed to create datasource schema: ${e.getMessage}", e))
+    }.tap(_ => ZIO.logInfo("Datasource schema initialized"))
+      .tapError(e => ZIO.logError(s"Failed to create datasource schema: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to create datasource schema: ${e.getMessage}", e))
 
   def make(xa: TransactorZIO): UIO[DataSourceBackend] =
     ZIO.succeed(new DataSourceBackend(xa))

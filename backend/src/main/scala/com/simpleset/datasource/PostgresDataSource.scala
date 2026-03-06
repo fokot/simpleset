@@ -55,26 +55,34 @@ class PostgresDataSource(
    */
   override def testConnection(ds: PostgresDataSource): Task[Boolean] =
     val testBinding = DataBinding(sql = "SELECT 1 AS test", dataSourceId = "test")
+    ZIO.logDebug("Testing database connection with SELECT 1") *>
     ds.getData(testBinding, Map.empty)
       .map(_ => true)
-      .catchAll(_ => ZIO.succeed(false))
+      .tap(result => ZIO.logDebug(s"Connection test result: $result"))
+      .catchAll { e =>
+        ZIO.logError(s"Connection test failed: ${e.getMessage}") *>
+        ZIO.succeed(false)
+      }
 
   /**
    * Executes the SQL query from the DataBinding and returns results as JSON.
-   * 
+   *
    * The SQL query can contain parameter placeholders in the format {{paramName}}.
    * These will be replaced with values from the params map.
-   * 
+   *
    * @param dataBinding Contains the SQL query to execute
    * @param params      Map of parameter names to JSON values for query substitution
    * @return Task containing JSON array of result rows
    */
   override def getData(dataBinding: DataBinding, params: Map[String, Json]): Task[Json] =
     val processedSql = substituteParams(dataBinding.sql, params)
-    
+
+    ZIO.logDebug(s"Executing query on datasource=${dataBinding.dataSourceId}: ${processedSql.take(200)}${if processedSql.length > 200 then "..." else ""}") *>
     xa.transact {
       executeQuery(processedSql)
-    }.mapError(e => new RuntimeException(s"Failed to execute query: ${e.getMessage}", e))
+    }.tap(_ => ZIO.logDebug(s"Query executed successfully on datasource=${dataBinding.dataSourceId}"))
+      .tapError(e => ZIO.logError(s"Query execution failed on datasource=${dataBinding.dataSourceId}: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to execute query: ${e.getMessage}", e))
 
   /**
    * // FIXME neist po parametroch ale po vsetkych vyskytoch premenntych v slq
@@ -187,6 +195,7 @@ class PostgresDataSource(
    * Should be called when the data source is no longer needed.
    */
   def close(): Task[Unit] =
+    ZIO.logDebug("Closing HikariCP connection pool") *>
     ZIO.attempt(hikariDataSource.close())
 
 
@@ -221,12 +230,14 @@ object PostgresDataSource:
    */
   def make(config: PostgresConfig): ZIO[Scope, Throwable, PostgresDataSource] =
     for
+      _ <- ZIO.logDebug(s"Creating PostgresDataSource for ${config.jdbcUrl}")
       hikariDs <- ZIO.acquireRelease(
         ZIO.attempt(createHikariDataSource(config))
-      )(ds => ZIO.attempt(ds.close()).orDie)
+      )(ds => ZIO.logDebug(s"Closing PostgresDataSource for ${config.jdbcUrl}") *> ZIO.attempt(ds.close()).orDie)
       transactor <- ZIO.service[TransactorZIO].provideLayer(
         ZLayer.succeed(hikariDs: JdbcDataSource) >>> TransactorZIO.layer
       )
+      _ <- ZIO.logDebug(s"PostgresDataSource created successfully for ${config.jdbcUrl}")
     yield new PostgresDataSource(transactor, hikariDs)
 
   /**

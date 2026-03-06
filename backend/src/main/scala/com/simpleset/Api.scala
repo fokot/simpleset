@@ -134,15 +134,22 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
 
   val getDashboardsRoute = getDashboardsEndpoint.implementHandler(
     handler {
-      backend.getDashboards.mapError(err => ErrorResponse(err.getMessage))
+      (for {
+        _ <- ZIO.logDebug("GET /dashboards - listing all dashboards")
+        result <- backend.getDashboards
+        _ <- ZIO.logDebug(s"GET /dashboards - returning ${result.size} dashboard(s)")
+      } yield result).mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
   val saveDashboardRoute = saveDashboardEndpoint.implementHandler(
     handler { (req: SaveDashboardRequest) =>
       (for {
+        _ <- ZIO.logDebug(s"POST /dashboards - saving dashboard '${req.name}'")
         _ <- backend.saveDashboard(req.name, req.dashboard)
+        _ <- ZIO.logInfo(s"Dashboard '${req.name}' saved successfully")
       } yield SuccessResponse("success"))
+        .tapError(err => ZIO.logError(s"POST /dashboards - failed to save dashboard '${req.name}': ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -150,14 +157,22 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   val getDashboardByNameRoute = getDashboardByNameEndpoint.implementHandler(
     handler { (name: String) =>
       val decodedName = URLDecoder.decode(name, StandardCharsets.UTF_8)
-      backend.getDashboard(decodedName)
+      (for {
+        _ <- ZIO.logDebug(s"GET /dashboards/$decodedName - fetching dashboard by name")
+        result <- backend.getDashboard(decodedName)
+      } yield result)
+        .tapError(err => ZIO.logError(s"GET /dashboards/$decodedName - not found: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
   val getDashboardByIdRoute = getDashboardByIdEndpoint.implementHandler(
     handler { (id: Long) =>
-      backend.getDashboard(id)
+      (for {
+        _ <- ZIO.logDebug(s"GET /dashboards/id/$id - fetching dashboard by ID")
+        result <- backend.getDashboard(id)
+      } yield result)
+        .tapError(err => ZIO.logError(s"GET /dashboards/id/$id - not found: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -175,20 +190,24 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   val getDashboardDataRoute = getDashboardDataEndpoint.implementHandler(
     handler { (req: GetDashboardDataRequest) =>
       (for {
+        _ <- ZIO.logDebug(s"POST /data - fetching data for chart '${req.chartId}' in dashboard version ${req.versionId}")
         dashboardVersion <- backend.getDashboard(req.versionId)
         bindings = model.findDataBindings(dashboardVersion.dashboard)
         dataBinding <- ZIO.fromOption(bindings.find(_.id == req.chartId)).mapBoth(_ => new NoSuchElementException(s"Chart not found: ${req.chartId}"), _.dataBinding)
-        _ <- ZIO.debug(s"Data binding found: $dataBinding")
+        _ <- ZIO.logDebug(s"POST /data - data binding found: dataSourceId=${dataBinding.dataSourceId}")
         // Convert request parameters (Json) to Map[String, Json]
         params = req.parameters match {
           case Json.Obj(fields) => fields.toMap
           case _ => Map.empty[String, Json]
         }
-        _ <- ZIO.debug(s"Query parameters: $params")
+        _ <- ZIO.logDebug(s"POST /data - query parameters: ${params.keys.mkString(", ")}")
         ds <- DataSourceRegistry.get(dataBinding.dataSourceId).provideLayer(ZLayer.succeed(dataSourceRegistry))
         data <- ds.getData(dataBinding, params)
+        _ <- ZIO.logDebug(s"POST /data - query executed successfully for chart '${req.chartId}'")
         res = Json.Obj("data" -> data)
-      } yield res).mapError(err => ErrorResponse(err.getMessage))
+      } yield res)
+        .tapError(err => ZIO.logError(s"POST /data - failed for chart '${req.chartId}': ${err.getMessage}"))
+        .mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
@@ -200,35 +219,45 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
     val jdbcUrl = s"jdbc:postgresql://${config.host}:${config.port}/${config.database}${if config.ssl then "?ssl=true&sslmode=require" else ""}"
     val pgConfig = PostgresConfig(jdbcUrl, config.username, config.password)
     val startTime = System.currentTimeMillis()
+    ZIO.logDebug(s"Testing connection to ${config.host}:${config.port}/${config.database}") *>
     PostgresDataSource.make(pgConfig).provideLayer(ZLayer.succeed(scope)).flatMap { ds =>
       ds.testConnection(ds).map { success =>
         val latency = System.currentTimeMillis() - startTime
         if success then TestConnectionResponse(true, "Connection successful", Some(latency))
         else TestConnectionResponse(false, "Connection test query failed", Some(latency))
       }
-    }.catchAll { e =>
+    }.tap(r => ZIO.logDebug(s"Connection test result: success=${r.success}, latency=${r.latency.getOrElse(0)}ms"))
+    .catchAll { e =>
       val latency = System.currentTimeMillis() - startTime
+      ZIO.logError(s"Connection test failed for ${config.host}:${config.port}/${config.database}: ${e.getMessage}") *>
       ZIO.succeed(TestConnectionResponse(false, s"Connection failed: ${e.getMessage}", Some(latency)))
     }
 
   private def registerDataSource(entity: com.simpleset.datasource.DataSourceEntity): Task[Unit] =
     val pgConfig = entity.toPostgresConfig
+    ZIO.logDebug(s"Registering datasource '${entity.name}' (id=${entity.id}) in registry") *>
     PostgresDataSource.make(pgConfig).provideLayer(ZLayer.succeed(scope)).flatMap { ds =>
       dataSourceRegistry.register(entity.id.toString, ds)
-    }
+    } <* ZIO.logInfo(s"Datasource '${entity.name}' (id=${entity.id}) registered successfully")
 
   val listDataSourcesRoute = listDataSourcesEndpoint.implementHandler(
     handler {
-      dataSourceBackend.getAll
-        .map(_.map(_.toResponse))
+      (for {
+        _ <- ZIO.logDebug("GET /api/v1/datasources - listing all datasources")
+        result <- dataSourceBackend.getAll
+        _ <- ZIO.logDebug(s"GET /api/v1/datasources - returning ${result.size} datasource(s)")
+      } yield result.map(_.toResponse))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
   val getDataSourceRoute = getDataSourceEndpoint.implementHandler(
     handler { (id: Long) =>
-      dataSourceBackend.getById(id)
-        .map(_.toResponse)
+      (for {
+        _ <- ZIO.logDebug(s"GET /api/v1/datasources/$id - fetching datasource")
+        result <- dataSourceBackend.getById(id)
+      } yield result.toResponse)
+        .tapError(err => ZIO.logError(s"GET /api/v1/datasources/$id - not found: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -252,9 +281,12 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
         updatedAt = now
       )
       (for {
+        _ <- ZIO.logDebug(s"POST /api/v1/datasources - creating datasource '${req.name}' (type=${req.`type`})")
         entity <- dataSourceBackend.create(creator)
         _ <- registerDataSource(entity)
+        _ <- ZIO.logInfo(s"Datasource '${req.name}' created with id=${entity.id}")
       } yield entity.toResponse)
+        .tapError(err => ZIO.logError(s"POST /api/v1/datasources - failed to create '${req.name}': ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -262,6 +294,7 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   val updateDataSourceRoute = updateDataSourceEndpoint.implementHandler(
     handler { (id: Long, req: UpdateDataSourceRequest) =>
       (for {
+        _ <- ZIO.logDebug(s"PUT /api/v1/datasources/$id - updating datasource")
         existing <- dataSourceBackend.getById(id)
         updated = existing.copy(
           name = req.name.getOrElse(existing.name),
@@ -276,9 +309,12 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
         )
         _ <- dataSourceBackend.updateEntity(updated)
         // Re-register with new config
+        _ <- ZIO.logDebug(s"PUT /api/v1/datasources/$id - re-registering datasource with updated config")
         _ <- dataSourceRegistry.unregister(id.toString)
         _ <- registerDataSource(updated)
+        _ <- ZIO.logInfo(s"Datasource '${updated.name}' (id=$id) updated successfully")
       } yield updated.toResponse)
+        .tapError(err => ZIO.logError(s"PUT /api/v1/datasources/$id - update failed: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -286,9 +322,12 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   val deleteDataSourceRoute = deleteDataSourceEndpoint.implementHandler(
     handler { (id: Long) =>
       (for {
+        _ <- ZIO.logDebug(s"DELETE /api/v1/datasources/$id - deleting datasource")
         _ <- dataSourceBackend.remove(id)
         _ <- dataSourceRegistry.unregister(id.toString)
+        _ <- ZIO.logInfo(s"Datasource id=$id deleted successfully")
       } yield DeletedResponse(true))
+        .tapError(err => ZIO.logError(s"DELETE /api/v1/datasources/$id - failed: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
@@ -296,6 +335,7 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   val testSavedConnectionRoute = testSavedConnectionEndpoint.implementHandler(
     handler { (id: Long) =>
       (for {
+        _ <- ZIO.logDebug(s"POST /api/v1/datasources/$id/test - testing saved connection")
         entity <- dataSourceBackend.getById(id)
         config = DatabaseConnectionConfig(
           host = entity.host,
@@ -307,13 +347,16 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
         )
         result <- testPostgresConnection(config)
       } yield result)
+        .tapError(err => ZIO.logError(s"POST /api/v1/datasources/$id/test - failed: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )
 
   val testConnectionRoute = testConnectionEndpoint.implementHandler(
     handler { (req: TestConnectionRequest) =>
+      ZIO.logDebug(s"POST /api/v1/datasources/test - testing ad-hoc connection to ${req.config.host}:${req.config.port}/${req.config.database}") *>
       testPostgresConnection(req.config)
+        .tapError(err => ZIO.logError(s"POST /api/v1/datasources/test - failed: ${err.getMessage}"))
         .mapError(err => ErrorResponse(err.getMessage))
     }
   )

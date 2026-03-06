@@ -46,55 +46,65 @@ class PostgresBackend(xa: TransactorZIO)
   with Backend:
 
   override def getDashboards: Task[List[DashboardVersionList]] =
+    ZIO.logDebug("Fetching all dashboards from database") *>
     xa.transact {
       val dashboards = findAll
       dashboards.map { entity =>
         DashboardVersionList(entity.id, entity.name, entity.updatedAt)
       }.sortBy(_.updatedAt.toEpochMilli).reverse.toList
-    }.mapError(e => new RuntimeException(s"Failed to get dashboards: ${e.getMessage}", e))
+    }.tap(list => ZIO.logDebug(s"Found ${list.size} dashboard(s) in database"))
+      .tapError(e => ZIO.logError(s"Failed to get dashboards: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to get dashboards: ${e.getMessage}", e))
 
   override def saveDashboard(name: String, dashboard: Json): Task[Unit] =
+    ZIO.logDebug(s"Saving dashboard '$name'") *>
     xa.transact {
       val now = Instant.now()
-      
+
       // Check if dashboard with this name already exists
       val spec = Spec[DashboardEntity]
         .where(sql"${DashboardEntity.table.name} = $name")
-      
+
       val existingOpt = findAll(spec).headOption
-      
+
       existingOpt match
         case Some(existing) =>
           // Update existing dashboard
           val updated = DashboardEntity.fromDomain(existing.id, name, dashboard, now)
           update(updated)
-          
+
         case None =>
           // Create new dashboard
           val creator = DashboardCreator.fromDomain(name, dashboard, now)
           insertReturning(creator)
           ()
-    }.mapError(e => new RuntimeException(s"Failed to save dashboard '$name': ${e.getMessage}", e))
+    }.tap(_ => ZIO.logDebug(s"Dashboard '$name' saved successfully"))
+      .tapError(e => ZIO.logError(s"Failed to save dashboard '$name': ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to save dashboard '$name': ${e.getMessage}", e))
 
   override def getDashboard(name: String): Task[DashboardVersion] =
+    ZIO.logDebug(s"Fetching dashboard '$name' from database") *>
     xa.transact {
       val spec = Spec[DashboardEntity]
         .where(sql"${DashboardEntity.table.name} = $name")
-      
+
       findAll(spec).headOption match
         case Some(entity) => entity.toDomain
         case None => throw new NoSuchElementException(s"Dashboard not found: $name")
-    }.mapError {
+    }.tapError(e => ZIO.logError(s"Failed to get dashboard '$name': ${e.getMessage}"))
+      .mapError {
       case e: NoSuchElementException => e
       case e => new RuntimeException(s"Failed to get dashboard '$name': ${e.getMessage}", e)
     }
 
   override def getDashboard(id: Long): Task[DashboardVersion] =
+    ZIO.logDebug(s"Fetching dashboard id=$id from database") *>
     xa.transact {
       findById(id) match
         case Some(entity) => entity.toDomain
         case None => throw new NoSuchElementException(s"Dashboard not found with id: $id")
-    }.mapError {
+    }.tapError(e => ZIO.logError(s"Failed to get dashboard id=$id: ${e.getMessage}"))
+      .mapError {
       case e: NoSuchElementException => e
       case e => new RuntimeException(s"Failed to get dashboard with id $id: ${e.getMessage}", e)
     }
@@ -106,6 +116,7 @@ object PostgresBackend:
    * This should be called once during application initialization.
    */
   def createSchema(xa: TransactorZIO): Task[Unit] =
+    ZIO.logDebug("Creating dashboard schema if not exists") *>
     xa.transact {
       val createTableSql = sql"""
         CREATE TABLE IF NOT EXISTS ${DashboardEntity.table} (
@@ -118,7 +129,9 @@ object PostgresBackend:
       
       createTableSql.update.run()
       ()
-    }.mapError(e => new RuntimeException(s"Failed to create schema: ${e.getMessage}", e))
+    }.tap(_ => ZIO.logInfo("Dashboard schema initialized"))
+      .tapError(e => ZIO.logError(s"Failed to create dashboard schema: ${e.getMessage}"))
+      .mapError(e => new RuntimeException(s"Failed to create schema: ${e.getMessage}", e))
 
   /**
    * Creates a PostgresBackend instance with the given Transactor.

@@ -17,7 +17,7 @@ import javax.sql.{DataSource => JdbcDataSource}
 
 object Main extends ZIOAppDefault:
 
-  private val port = 8080
+  private val port = 3000
   private val serverConfig = Config.default.copy(address = new InetSocketAddress(port))
 
   // App database config (used for storing datasource configs, dashboards, etc.)
@@ -64,9 +64,10 @@ object Main extends ZIOAppDefault:
   // Main application
   def run: ZIO[ZIOAppArgs & Scope, Throwable, Unit] =
     ZIO.scoped(for
-      _ <- Console.printLine(s"Starting ZIO-HTTP server on port $port...")
+      _ <- ZIO.logInfo(s"Starting ZIO-HTTP server on port $port...")
 
       // Load persisted datasources into registry
+      _ <- ZIO.logDebug("Loading persisted datasources into registry...")
       _ <- loadPersistedDataSources
 
       routes <- ZIO.service[Api]
@@ -77,12 +78,14 @@ object Main extends ZIOAppDefault:
       )
       httpApp = routes.routes @@ cors(corsConfig)
 
+      _ <- ZIO.logDebug("Starting HTTP server...")
       process <- Server.serve(httpApp).fork
 
       _ <- ZIO.sleep(5.seconds)
+      _ <- ZIO.logDebug("Running init-data script...")
       result <- Command("../examples/init-data.sh", s"http://localhost:$port").exitCode
       _ <- ZIO.fail(Exception(s"data init failed")).when(result != ExitCode.success)
-      _ <- Console.printLine(s"Open http://localhost:$port/docs/openapi to view the API documentation")
+      _ <- ZIO.logInfo(s"Server ready. Open http://localhost:$port/docs/openapi to view the API documentation")
       _ <- process.join
     yield ()).provideSome[Scope](
       ZLayer.succeed(serverConfig),
