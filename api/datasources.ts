@@ -199,7 +199,7 @@ export const CreateDataSourceRequestSchema = z.object({
   name: z.string().min(1).max(100),
   description: z.string().max(500).optional(),
   type: DataSourceTypeSchema,
-  config: DataSourceConfigSchema,
+  config: DatabaseConfigSchema,
   tags: z.array(z.string()).default([]),
   sharing: SharingConfigSchema.optional(),
 });
@@ -216,7 +216,7 @@ export const UpdateDataSourceRequestSchema = CreateDataSourceRequestSchema.parti
  */
 export const TestConnectionRequestSchema = z.object({
   type: DataSourceTypeSchema,
-  config: DataSourceConfigSchema,
+  config: DatabaseConfigSchema,
 });
 
 /**

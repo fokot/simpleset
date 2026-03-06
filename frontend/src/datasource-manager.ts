@@ -290,15 +290,12 @@ export class DatasourceManager extends LitElement {
       description: this._formDescription || undefined,
       type: 'postgresql',
       config: {
-        type: 'postgresql',
-        config: {
-          host: this._formHost,
-          port: this._formPort,
-          database: this._formDatabase,
-          username: this._formUsername,
-          password: this._formPassword,
-          ssl: this._formSsl,
-        },
+        host: this._formHost,
+        port: this._formPort,
+        database: this._formDatabase,
+        username: this._formUsername,
+        password: this._formPassword,
+        ssl: this._formSsl,
       },
     };
   }
@@ -310,15 +307,12 @@ export class DatasourceManager extends LitElement {
       const body: TestConnectionRequest = {
         type: 'postgresql',
         config: {
-          type: 'postgresql',
-          config: {
-            host: this._formHost,
-            port: this._formPort,
-            database: this._formDatabase,
-            username: this._formUsername,
-            password: this._formPassword,
-            ssl: this._formSsl,
-          },
+          host: this._formHost,
+          port: this._formPort,
+          database: this._formDatabase,
+          username: this._formUsername,
+          password: this._formPassword,
+          ssl: this._formSsl,
         },
       };
       const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
