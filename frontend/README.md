@@ -20,19 +20,14 @@ A simple web component built with Lit that displays "Hello" text with interactiv
 
 2. **Build the component**:
    ```bash
-   pnpm run build
+   pnpm build
    ```
 
 3. **Development mode** (with file watching):
    ```bash
-   pnpm run dev
+   pnpm dev
    ```
-
-4. **Serve the demo**:
-   ```bash
-   pnpm run serve
-   ```
-   Then open http://localhost:8000 in your browser.
+   Then open http://localhost:5173/ in your browser.
 
 ## Files Structure
 
@@ -47,12 +42,12 @@ After building, you can use the component in any HTML page:
 
 ```html
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <script type="module" src="dist/hello-component.js"></script>
+    <script type="module" src="dist/dashboard-component.js"></script>
 </head>
 <body>
-    <hello-component></hello-component>
+    <dashboard-component></dashboard-component>
 </body>
 </html>
 ```
