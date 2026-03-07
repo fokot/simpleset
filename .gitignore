@@ -50,20 +50,12 @@ jspm_packages/
 .env.test.local
 .env.production.local
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
-
 # Next.js build output
 .next
 
 # Nuxt.js build / generate output
 .nuxt
 dist
-
-# Gatsby files
-.cache/
-public
 
 # Vuepress build output
 .vuepress/dist
@@ -106,9 +98,6 @@ project/plugins/project/
 # ENSIME specific
 .ensime_cache/
 .ensime
-
-# Mill
-out/
 
 # Metals
 .metals/
@@ -218,3 +207,11 @@ Icon?
 *.backup
 *.old
 *.orig
+
+# Vite
+.vite/
+
+# Agents
+.augment
+.claude
+openspec

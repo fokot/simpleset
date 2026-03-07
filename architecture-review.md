@@ -68,17 +68,15 @@ Choosing Scala 3 + ZIO for familiarity is honest and valid. The implementation i
 
 **Verdict**: For a solo/small-team project where you're productive in Scala, this is fine. If the project grows and you want contributors, consider whether a TypeScript/Node.js backend (sharing Zod schemas directly) or a Go/Rust backend (simpler learning curve) would serve better. The current architecture makes it easy to swap — the `Backend` trait is clean and the API is well-separated.
 
-## 5. Rollup — ⚠️ Switch to Vite
+## 5. Vite — ✅ Excellent Choice
 
-Rollup works, but you chose it randomly, and there's a clearly better option:
+Vite is the standard build tool for modern frontend projects:
 
-- **Vite uses Rollup under the hood** for production builds, so you get the same output quality.
-- **Vite adds**: instant HMR dev server, faster rebuilds, zero-config TypeScript support, built-in asset handling.
-- **Your current `rollup.config.js`** manually configures TypeScript, node-resolve, replace, and terser plugins. Vite handles all of this by default.
-- **For a web component library**, Vite's `lib` mode is purpose-built. Your config would shrink from 79 lines to ~15.
-- **Ecosystem momentum**: As of 2026, Vite is the standard. Rollup is still maintained but primarily as Vite's internal engine.
-
-**Recommendation**: Migrate to Vite. It's a low-effort, high-reward change.
+- **Rollup under the hood** for production builds — optimized output, tree-shaking, code splitting.
+- **Instant HMR dev server** with native ESM — no bundling during development.
+- **Zero-config TypeScript**: No plugins needed, just works.
+- **`lib` mode** is purpose-built for web component libraries — the build config is ~50 lines.
+- **Ecosystem standard**: Widest community adoption, extensive plugin ecosystem, long-term support.
 
 ## 6. Preact Signals for Editor State — ✅ Good Choice
 
@@ -114,7 +112,7 @@ The `EditorStore` using `@preact/signals-core` is well-designed:
 | Lit web components | ✅ Excellent | Perfect for embeddable, framework-agnostic widgets |
 | ECharts | ✅ Good | Most capable single library; watch bundle size, consider abstraction layer |
 | Scala 3 + ZIO | ⚠️ Acceptable | Clean code, but niche; contributor/hiring barrier |
-| Rollup | ⚠️ Replace | Switch to Vite — same engine, better DX, less config |
+| Vite | ✅ Excellent | Fast HMR dev server, Rollup-based production builds, native TS/ESM support, minimal config |
 | Preact Signals | ✅ Good | Right tool for reactive editor state with Lit |
 | PostgreSQL storage | ✅ Good | Solid default; JSON blob storage is pragmatic |
 
@@ -122,5 +120,4 @@ The `EditorStore` using `@preact/signals-core` is well-designed:
 
 1. **Fix SQL injection**: Replace string substitution with parameterized queries in `PostgresDataSource`. This is a security issue, not just a nice-to-have.
 2. **Eliminate type duplication**: Generate `frontend/src/types/dashboard-types.ts` from `api/` Zod schemas. Even a manual `npm run sync-types` script would help.
-3. **Switch Rollup → Vite**: Low effort, immediate DX improvement.
 
