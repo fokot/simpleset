@@ -101,4 +101,111 @@ object model {
 
   object ErrorResponse:
     given Schema[ErrorResponse] = DeriveSchema.gen[ErrorResponse]
+
+  // ============================================================================
+  // Datasource models
+  // ============================================================================
+
+  case class DatabaseConnectionConfig(
+    host: String,
+    port: Int,
+    database: String,
+    username: String,
+    password: String,
+    ssl: Boolean = false
+  )
+
+  object DatabaseConnectionConfig:
+    given Schema[DatabaseConnectionConfig] = DeriveSchema.gen[DatabaseConnectionConfig]
+
+  case class CreateDataSourceRequest(
+    @description("Name of the datasource")
+    name: String,
+    @description("Description of the datasource")
+    description: Option[String] = None,
+    @description("Type of the datasource (only 'postgresql' supported)")
+    `type`: String = "postgresql",
+    @description("Connection configuration")
+    config: DatabaseConnectionConfig
+  )
+
+  object CreateDataSourceRequest:
+    given Schema[CreateDataSourceRequest] = DeriveSchema.gen[CreateDataSourceRequest]
+
+  case class UpdateDataSourceRequest(
+    @description("Name of the datasource")
+    name: Option[String] = None,
+    @description("Description of the datasource")
+    description: Option[String] = None,
+    @description("Connection configuration")
+    config: Option[DatabaseConnectionConfig] = None
+  )
+
+  object UpdateDataSourceRequest:
+    given Schema[UpdateDataSourceRequest] = DeriveSchema.gen[UpdateDataSourceRequest]
+
+  case class DataSourceResponseConfig(
+    host: String,
+    port: Int,
+    database: String,
+    username: String,
+    ssl: Boolean
+  )
+
+  object DataSourceResponseConfig:
+    given Schema[DataSourceResponseConfig] = DeriveSchema.gen[DataSourceResponseConfig]
+
+  case class DataSourceResponse(
+    @description("Datasource ID")
+    id: Long,
+    @description("Name of the datasource")
+    name: String,
+    @description("Description of the datasource")
+    description: Option[String],
+    @description("Type of the datasource")
+    `type`: String,
+    @description("Connection configuration (without password)")
+    config: DataSourceResponseConfig,
+    @description("Connection status")
+    status: String,
+    @description("Error message if connection failed")
+    errorMessage: Option[String] = None,
+    @description("Created at timestamp")
+    createdAt: Instant,
+    @description("Updated at timestamp")
+    updatedAt: Instant
+  )
+
+  object DataSourceResponse:
+    given Schema[DataSourceResponse] = DeriveSchema.gen[DataSourceResponse]
+
+  case class TestConnectionRequest(
+    @description("Type of the datasource")
+    `type`: String = "postgresql",
+    @description("Connection configuration")
+    config: DatabaseConnectionConfig
+  )
+
+  object TestConnectionRequest:
+    given Schema[TestConnectionRequest] = DeriveSchema.gen[TestConnectionRequest]
+
+  case class TestConnectionResponse(
+    @description("Whether the connection was successful")
+    success: Boolean,
+    @description("Status message")
+    message: String,
+    @description("Connection latency in milliseconds")
+    latency: Option[Long] = None
+  )
+
+  object TestConnectionResponse:
+    given Schema[TestConnectionResponse] = DeriveSchema.gen[TestConnectionResponse]
+
+  case class DeletedResponse(
+    @description("Whether the resource was deleted")
+    deleted: Boolean
+  )
+
+  object DeletedResponse:
+    given Schema[DeletedResponse] = DeriveSchema.gen[DeletedResponse]
 }

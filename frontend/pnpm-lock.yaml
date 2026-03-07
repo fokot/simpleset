@@ -42,6 +42,9 @@ importers:
       typescript:
         specifier: ^5.9.2
         version: 5.9.2
+      zod:
+        specifier: ^3.25.76
+        version: 3.25.76
 
 packages:
 
@@ -359,6 +362,9 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
+  zod@3.25.76:
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
   zrender@6.0.0:
     resolution: {integrity: sha512-41dFXEEXuJpNecuUQq6JlbybmnHaqqpGlbH1yxnA5V9MMP4SbohSVZsJIwz+zdjQXSSlR1Vc34EgH1zxyTDvhg==}
 
@@ -628,6 +634,8 @@ snapshots:
   tslib@2.8.1: {}
 
   typescript@5.9.2: {}
+
+  zod@3.25.76: {}
 
   zrender@6.0.0:
     dependencies:

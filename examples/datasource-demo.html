@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Datasource Manager Demo</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: 'Inter', system-ui, sans-serif;
+            background-color: #f5f5f5;
+        }
+
+        .demo-container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .demo-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0 0 10px 0;
+            color: #1a1a1a;
+        }
+
+        .demo-subtitle {
+            font-size: 1rem;
+            color: #666;
+            margin: 0;
+        }
+
+        .component-wrapper {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            min-height: 400px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 16px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .back-link:hover {
+            background: #667eea;
+            color: white;
+        }
+
+        .api-note {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #fff3e0;
+            border: 1px solid #ffe0b2;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #e65100;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <a href="/index.html" class="back-link">← Back to All Demos</a>
+
+        <div class="demo-header">
+            <h1 class="demo-title">Datasource Manager Demo</h1>
+            <p class="demo-subtitle">
+                Manage PostgreSQL database connections — add, edit, test, and delete data sources
+            </p>
+            <div class="api-note">
+                <strong>Note:</strong> This component requires a running backend API.
+                Set the <code>api-base-url</code> attribute to point to your API server
+                (e.g. <code>http://localhost:3000</code>).
+            </div>
+        </div>
+
+        <div class="component-wrapper">
+            <datasource-manager api-base-url="http://localhost:3000"></datasource-manager>
+        </div>
+    </div>
+
+    <script type="module" src="/frontend/dist/datasource-manager.js"></script>
+</body>
+</html>
+

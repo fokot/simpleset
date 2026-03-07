@@ -7,12 +7,17 @@
     "declarationMap": false,
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "..",
     "strict": false,
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "moduleResolution": "node",
+    "baseUrl": ".",
+    "paths": {
+      "zod": ["./node_modules/zod"]
+    },
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "useDefineForClassFields": false,
