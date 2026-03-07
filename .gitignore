@@ -77,7 +77,6 @@ dist
 
 # Scala
 *.class
-*.log
 .bsp
 
 # sbt specific
@@ -112,20 +111,6 @@ project/metals.sbt
 *.iml
 *.ipr
 *.iws
-
-# Eclipse
-.project
-.metadata
-bin/
-tmp/
-*.tmp
-*.bak
-*.swp
-*~.nib
-local.properties
-.settings/
-.loadpath
-.recommenders
 
 # External tool builders
 .externalToolBuilders/
