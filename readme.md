@@ -4,6 +4,7 @@ Imagine if [Superset](https://superset.apache.org/) was re-invented with
 * AI-native dashboards and charts
   * Seamless LLM integration for query generation and visualization
   * Fully documented APIs and data models with Zod
+  * AI integration with Api key, simpleset MCP or CLI (use it from you own favorite AI tool)
 * Built for embedding
   * Drop-in web component for any framework (React, Vue, and Angular etc.) or vanilla HTML
   * Hooks for enriching or transforming data after fetching
