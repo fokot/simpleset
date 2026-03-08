@@ -20,7 +20,6 @@ export class EditorCanvas extends LitElement {
   @state()
   private _dropIndicator: { x: number; y: number; width: number; height: number } | null = null;
 
-  // Not @state — these are manipulated during drag/resize and must NOT trigger re-renders
   private _dragState: { widgetId: string; dx: number; dy: number } | null = null;
   private _resizeState: { widgetId: string; dw: number; dh: number } | null = null;
 
@@ -34,15 +33,18 @@ export class EditorCanvas extends LitElement {
       display: block;
       position: relative;
       min-height: 100%;
-      background: #ffffff;
+      background: var(--ed-widget-bg, #ffffff);
       box-sizing: border-box;
-      --cell-size: 20px;
-      --grid-color: #ebebeb;
-      background-image:
-        linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
-        linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
-      background-size: var(--cell-size) var(--cell-size);
-      background-position: -1px -1px;
+      border-radius: var(--ed-radius-md, 8px);
+      transition: background-color 0.3s ease;
+
+      /* Dot grid pattern */
+      --dot-size: 1px;
+      --dot-space: 24px;
+      --dot-color: var(--ed-border, #d4d7dd);
+      background-image: radial-gradient(circle, var(--dot-color) var(--dot-size), transparent var(--dot-size));
+      background-size: var(--dot-space) var(--dot-space);
+      background-position: calc(var(--dot-space) / 2) calc(var(--dot-space) / 2);
     }
 
     .grid-content {
@@ -54,28 +56,32 @@ export class EditorCanvas extends LitElement {
     .widget-wrapper {
       position: absolute;
       box-sizing: border-box;
-      border: 2px solid transparent;
-      border-radius: 8px;
-      background: white;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+      border: 1.5px solid var(--ed-border-subtle, #e8eaed);
+      border-radius: var(--ed-radius-md, 8px);
+      background: var(--ed-widget-bg, #ffffff);
+      box-shadow: var(--ed-widget-shadow, 0 1px 3px rgba(0,0,0,0.06));
       cursor: pointer;
       touch-action: none;
       overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     .widget-wrapper:hover {
-      border-color: #b0c4de;
+      border-color: var(--ed-accent, #0ea5e9);
+      box-shadow: var(--ed-widget-shadow-hover, 0 4px 12px rgba(0,0,0,0.08));
     }
 
     .widget-wrapper.selected {
-      border-color: #4a90d9;
-      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.2), 0 2px 8px rgba(0, 0, 0, 0.12);
+      border-color: var(--ed-accent, #0ea5e9);
+      box-shadow: 0 0 0 2px var(--ed-accent-glow, rgba(14, 165, 233, 0.25)),
+                  var(--ed-widget-shadow-hover, 0 4px 12px rgba(0,0,0,0.08));
     }
 
     .widget-wrapper.dragging {
       opacity: 0.85;
       z-index: 100;
       cursor: grabbing;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     }
 
     .widget-header-bar {
@@ -83,12 +89,13 @@ export class EditorCanvas extends LitElement {
       align-items: center;
       justify-content: space-between;
       padding: 6px 10px;
-      background: #f8f9fa;
-      border-bottom: 1px solid #eee;
-      font-size: 0.8rem;
+      background: var(--ed-bg-secondary, #f4f5f7);
+      border-bottom: 1px solid var(--ed-border-subtle, #e8eaed);
+      font-size: 0.78rem;
       font-weight: 500;
-      color: #555;
+      color: var(--ed-text-secondary, #5f6672);
       cursor: grab;
+      transition: background-color 0.15s ease;
     }
 
     .widget-header-bar:active {
@@ -96,18 +103,20 @@ export class EditorCanvas extends LitElement {
     }
 
     .widget-type-badge {
-      font-size: 0.65rem;
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      font-size: 0.6rem;
+      font-weight: 500;
       padding: 2px 6px;
-      border-radius: 3px;
-      background: #e8e8e8;
-      color: #888;
+      border-radius: 4px;
+      background: var(--ed-bg-tertiary, #ebedf0);
+      color: var(--ed-text-tertiary, #8c919a);
       text-transform: uppercase;
-      letter-spacing: 0.04em;
+      letter-spacing: 0.06em;
     }
 
     .widget-actions {
       display: flex;
-      gap: 4px;
+      gap: 3px;
       opacity: 0;
       transition: opacity 0.15s ease;
     }
@@ -121,25 +130,26 @@ export class EditorCanvas extends LitElement {
       width: 22px;
       height: 22px;
       border: none;
-      background: #e0e0e0;
-      border-radius: 3px;
+      background: var(--ed-bg-tertiary, #ebedf0);
+      border-radius: 4px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 0.7rem;
-      color: #666;
+      color: var(--ed-text-secondary, #5f6672);
       padding: 0;
+      transition: all 0.12s ease;
     }
 
     .widget-action-btn:hover {
-      background: #d0d0d0;
-      color: #333;
+      background: var(--ed-accent-subtle, rgba(14, 165, 233, 0.1));
+      color: var(--ed-accent, #0ea5e9);
     }
 
     .widget-action-btn.delete:hover {
-      background: #ffcdd2;
-      color: #c62828;
+      background: var(--ed-danger-bg, #fef2f2);
+      color: var(--ed-danger, #ef4444);
     }
 
     .widget-body {
@@ -148,7 +158,7 @@ export class EditorCanvas extends LitElement {
       display: flex;
       align-items: center;
       justify-content: center;
-      color: #aaa;
+      color: var(--ed-text-muted, #adb1b8);
       font-size: 0.8rem;
       min-height: 40px;
     }
@@ -157,8 +167,8 @@ export class EditorCanvas extends LitElement {
       position: absolute;
       bottom: 0;
       right: 0;
-      width: 16px;
-      height: 16px;
+      width: 18px;
+      height: 18px;
       cursor: nwse-resize;
       opacity: 0;
       transition: opacity 0.15s ease;
@@ -172,19 +182,20 @@ export class EditorCanvas extends LitElement {
     .resize-handle::after {
       content: '';
       position: absolute;
-      bottom: 3px;
-      right: 3px;
-      width: 8px;
-      height: 8px;
-      border-right: 2px solid #999;
-      border-bottom: 2px solid #999;
+      bottom: 4px;
+      right: 4px;
+      width: 6px;
+      height: 6px;
+      border-right: 2px solid var(--ed-accent, #0ea5e9);
+      border-bottom: 2px solid var(--ed-accent, #0ea5e9);
+      opacity: 0.6;
     }
 
     .drop-indicator {
       position: absolute;
-      background: rgba(74, 144, 217, 0.1);
-      border: 2px dashed #4a90d9;
-      border-radius: 8px;
+      background: var(--ed-accent-subtle, rgba(14, 165, 233, 0.1));
+      border: 2px dashed var(--ed-accent, #0ea5e9);
+      border-radius: var(--ed-radius-md, 8px);
       pointer-events: none;
       z-index: 50;
     }
@@ -195,19 +206,39 @@ export class EditorCanvas extends LitElement {
       align-items: center;
       justify-content: center;
       min-height: 400px;
-      color: #bbb;
-      font-size: 0.95rem;
-      gap: 8px;
+      color: var(--ed-text-muted, #adb1b8);
+      gap: 10px;
     }
 
     .empty-state-icon {
-      font-size: 2.5rem;
-      opacity: 0.5;
+      width: 56px;
+      height: 56px;
+      border-radius: var(--ed-radius-lg, 12px);
+      background: var(--ed-bg-secondary, #f4f5f7);
+      border: 2px dashed var(--ed-border, #d4d7dd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      color: var(--ed-text-tertiary, #8c919a);
+      transition: all 0.3s ease;
+    }
+
+    .empty-state:hover .empty-state-icon {
+      border-color: var(--ed-accent, #0ea5e9);
+      color: var(--ed-accent, #0ea5e9);
+    }
+
+    .empty-state-text {
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: var(--ed-text-secondary, #5f6672);
     }
 
     .empty-state-hint {
-      font-size: 0.8rem;
-      color: #ccc;
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      font-size: 0.72rem;
+      color: var(--ed-text-muted, #adb1b8);
     }
   `;
 
@@ -215,7 +246,7 @@ export class EditorCanvas extends LitElement {
     super.connectedCallback();
     this._resizeObserver = new ResizeObserver(entries => {
       for (const entry of entries) {
-        this._canvasWidth = entry.contentRect.width - 32; // minus padding
+        this._canvasWidth = entry.contentRect.width - 32;
       }
     });
   }
@@ -235,11 +266,9 @@ export class EditorCanvas extends LitElement {
   }
 
   protected updated(changedProperties: PropertyValues) {
-    // Never re-setup interactjs during an active drag or resize — it destroys the operation
     if (this._dragState || this._resizeState) return;
 
     if (changedProperties.has('widgets')) {
-      // Only re-setup if the widget list actually changed (new/removed widgets)
       const newIds = this.widgets.map(w => w.id).join(',');
       if (newIds !== this._prevWidgetIds) {
         this._prevWidgetIds = newIds;
@@ -257,7 +286,6 @@ export class EditorCanvas extends LitElement {
     return 80;
   }
 
-  // Convert grid units to pixels
   private _gridToPixel(x: number, y: number, w: number, h: number) {
     const colW = this._colWidth;
     const rowH = this._rowHeight;
@@ -269,7 +297,6 @@ export class EditorCanvas extends LitElement {
     };
   }
 
-  // Convert pixel position to grid units
   private _pixelToGrid(px: number, py: number): { x: number; y: number } {
     const colW = this._colWidth + this.gap;
     const rowH = this._rowHeight + this.gap;
@@ -287,8 +314,6 @@ export class EditorCanvas extends LitElement {
       height: Math.max(1, Math.round((ph + this.gap) / rowH)),
     };
   }
-
-  // --- interactjs setup ---
 
   private _cleanupInteract() {
     this._interactables.forEach(i => i.unset());
@@ -326,7 +351,6 @@ export class EditorCanvas extends LitElement {
                 dx: this._dragState.dx + event.dx,
                 dy: this._dragState.dy + event.dy,
               };
-              // Apply transform for visual feedback
               const target = event.target as HTMLElement;
               target.style.transform = `translate(${this._dragState.dx}px, ${this._dragState.dy}px)`;
               target.classList.add('dragging');
@@ -337,13 +361,11 @@ export class EditorCanvas extends LitElement {
               target.style.transform = '';
               target.classList.remove('dragging');
 
-              // Calculate new grid position
               const pos = this._gridToPixel(widget.position.x, widget.position.y, widget.position.width, widget.position.height);
               const newPixelX = pos.left + this._dragState.dx;
               const newPixelY = pos.top + this._dragState.dy;
               const gridPos = this._pixelToGrid(newPixelX, newPixelY);
 
-              // Clamp x to grid
               const maxX = this.columns - widget.position.width;
               gridPos.x = Math.max(0, Math.min(gridPos.x, maxX));
               gridPos.y = Math.max(0, gridPos.y);
@@ -397,8 +419,6 @@ export class EditorCanvas extends LitElement {
     });
   }
 
-  // --- Drop handling ---
-
   private _handleDragOver(e: DragEvent) {
     if (!e.dataTransfer?.types.includes('application/widget-type')) return;
     e.preventDefault();
@@ -406,7 +426,6 @@ export class EditorCanvas extends LitElement {
 
     const rect = (this.renderRoot.querySelector('.grid-content') as HTMLElement).getBoundingClientRect();
     const gridPos = this._pixelToGrid(e.clientX - rect.left - 16, e.clientY - rect.top - 16);
-    // Default 4x2 drop size
     const dropW = 4;
     const dropH = 2;
     gridPos.x = Math.max(0, Math.min(gridPos.x, this.columns - dropW));
@@ -415,7 +434,6 @@ export class EditorCanvas extends LitElement {
   }
 
   private _handleDragLeave(e: DragEvent) {
-    // Only hide if leaving the canvas entirely
     const rect = this.getBoundingClientRect();
     if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) {
       this._dropIndicator = null;
@@ -439,8 +457,6 @@ export class EditorCanvas extends LitElement {
     }));
   }
 
-  // --- Selection ---
-
   private _selectWidget(widgetId: string) {
     this.dispatchEvent(new CustomEvent('widget-select', {
       detail: { widgetId },
@@ -458,8 +474,6 @@ export class EditorCanvas extends LitElement {
       }));
     }
   }
-
-  // --- Widget actions ---
 
   private _handleDuplicate(e: Event, widgetId: string) {
     e.stopPropagation();
@@ -479,33 +493,29 @@ export class EditorCanvas extends LitElement {
     }));
   }
 
-  // --- Widget preview content ---
-
   private _renderWidgetPreview(widget: DashboardWidget) {
     const type = widget.config.type;
     switch (type) {
       case 'chart':
         return html`<span style="font-size:1.5rem;opacity:0.4">📊</span>`;
       case 'metric':
-        return html`<span style="font-size:1.2rem;color:#555;font-weight:600">${(widget.config as any).config?.value ?? '—'}</span>`;
+        return html`<span style="font-size:1.2rem;color:var(--ed-text-secondary);font-weight:600">${(widget.config as any).config?.value ?? '—'}</span>`;
       case 'table':
         return html`<span style="font-size:1.5rem;opacity:0.4">📋</span>`;
       case 'text':
-        return html`<span style="font-size:0.75rem;color:#888;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(widget.config as any).config?.content ?? 'Text'}</span>`;
+        return html`<span style="font-size:0.75rem;color:var(--ed-text-tertiary);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(widget.config as any).config?.content ?? 'Text'}</span>`;
       case 'markdown':
-        return html`<span style="font-size:0.75rem;color:#888">Markdown</span>`;
+        return html`<span style="font-size:0.75rem;color:var(--ed-text-tertiary)">Markdown</span>`;
       case 'image':
         return html`<span style="font-size:1.5rem;opacity:0.4">🖼</span>`;
       case 'iframe':
         return html`<span style="font-size:1.5rem;opacity:0.4">⧉</span>`;
       case 'filter':
-        return html`<span style="font-size:0.75rem;color:#888">${(widget.config as any).config?.label ?? 'Filter'}</span>`;
+        return html`<span style="font-size:0.75rem;color:var(--ed-text-tertiary)">${(widget.config as any).config?.label ?? 'Filter'}</span>`;
       default:
         return html`<span>${type}</span>`;
     }
   }
-
-  // --- Render ---
 
   private _renderWidget(widget: DashboardWidget) {
     const isSelected = widget.id === this.selectedWidgetId;
@@ -546,8 +556,8 @@ export class EditorCanvas extends LitElement {
         ${this.widgets.length === 0 && !this._dropIndicator ? html`
           <div class="empty-state">
             <div class="empty-state-icon">+</div>
-            <div>Drag a widget from the palette or click one to add it</div>
-            <div class="empty-state-hint">Widgets snap to a ${this.columns}-column grid</div>
+            <div class="empty-state-text">Drag a widget from the palette or click to add</div>
+            <div class="empty-state-hint">${this.columns}-column grid layout</div>
           </div>
         ` : ''}
 

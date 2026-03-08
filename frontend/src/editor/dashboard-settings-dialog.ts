@@ -28,7 +28,20 @@ export class DashboardSettingsDialog extends LitElement {
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(0, 0, 0, 0.4);
+      background: var(--ed-overlay, rgba(0, 0, 0, 0.45));
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      animation: fade-in 0.2s ease;
+    }
+
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes slide-up {
+      from { opacity: 0; transform: translate(-50%, -46%); }
+      to { opacity: 1; transform: translate(-50%, -50%); }
     }
 
     .dialog {
@@ -36,77 +49,86 @@ export class DashboardSettingsDialog extends LitElement {
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background: white;
-      border-radius: 10px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
-      width: 480px;
+      background: var(--ed-bg-primary, #ffffff);
+      border-radius: var(--ed-radius-lg, 12px);
+      border: 1px solid var(--ed-border, #d4d7dd);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+      width: 500px;
       max-height: 80vh;
       display: flex;
       flex-direction: column;
+      animation: slide-up 0.25s ease;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .dialog-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px;
-      border-bottom: 1px solid #eee;
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--ed-border-subtle, #e8eaed);
     }
 
     .dialog-title {
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 600;
-      color: #1a1a1a;
+      color: var(--ed-text-primary, #1a1d23);
+      letter-spacing: -0.01em;
     }
 
     .close-btn {
       width: 28px;
       height: 28px;
       border: none;
-      background: #f0f0f0;
-      border-radius: 4px;
+      background: var(--ed-bg-tertiary, #ebedf0);
+      border-radius: var(--ed-radius-sm, 6px);
       cursor: pointer;
-      font-size: 1rem;
-      color: #666;
+      font-size: 0.85rem;
+      color: var(--ed-text-secondary, #5f6672);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
+      transition: all 0.15s ease;
     }
 
     .close-btn:hover {
-      background: #e0e0e0;
+      background: var(--ed-bg-secondary, #f4f5f7);
+      color: var(--ed-text-primary, #1a1d23);
     }
 
     .tabs {
       display: flex;
-      border-bottom: 1px solid #eee;
-      padding: 0 20px;
+      border-bottom: 1px solid var(--ed-border-subtle, #e8eaed);
+      padding: 0 22px;
+      gap: 2px;
     }
 
     .tab {
-      padding: 10px 16px;
+      padding: 10px 14px;
       border: none;
       background: none;
-      font-size: 0.85rem;
-      color: #888;
+      font-size: 0.82rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 500;
+      color: var(--ed-text-tertiary, #8c919a);
       cursor: pointer;
       border-bottom: 2px solid transparent;
       margin-bottom: -1px;
+      transition: all 0.15s ease;
     }
 
     .tab.active {
-      color: #4a90d9;
-      border-bottom-color: #4a90d9;
-      font-weight: 500;
+      color: var(--ed-accent, #0ea5e9);
+      border-bottom-color: var(--ed-accent, #0ea5e9);
     }
 
     .tab:hover:not(.active) {
-      color: #555;
+      color: var(--ed-text-primary, #1a1d23);
     }
 
     .dialog-body {
-      padding: 20px;
+      padding: 22px;
       overflow-y: auto;
       flex: 1;
     }
@@ -117,10 +139,10 @@ export class DashboardSettingsDialog extends LitElement {
 
     .field-label {
       display: block;
-      font-size: 0.75rem;
+      font-size: 0.72rem;
       font-weight: 500;
-      color: #666;
-      margin-bottom: 4px;
+      color: var(--ed-text-secondary, #5f6672);
+      margin-bottom: 5px;
     }
 
     input[type="text"],
@@ -129,18 +151,21 @@ export class DashboardSettingsDialog extends LitElement {
     textarea,
     select {
       width: 100%;
-      padding: 8px 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      font-size: 0.85rem;
-      font-family: inherit;
+      padding: 8px 11px;
+      border: 1px solid var(--ed-border, #d4d7dd);
+      border-radius: var(--ed-radius-sm, 6px);
+      font-size: 0.82rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
       box-sizing: border-box;
+      background: var(--ed-input-bg, #ffffff);
+      color: var(--ed-text-primary, #1a1d23);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     input:focus, textarea:focus, select:focus {
       outline: none;
-      border-color: #4a90d9;
-      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+      border-color: var(--ed-accent, #0ea5e9);
+      box-shadow: 0 0 0 2px var(--ed-accent-glow, rgba(14, 165, 233, 0.25));
     }
 
     textarea {
@@ -159,7 +184,7 @@ export class DashboardSettingsDialog extends LitElement {
 
     .color-row {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
     }
 
@@ -167,52 +192,54 @@ export class DashboardSettingsDialog extends LitElement {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
+      gap: 5px;
     }
 
     .color-field input[type="color"] {
-      width: 36px;
-      height: 36px;
-      padding: 2px;
-      border-radius: 6px;
+      width: 40px;
+      height: 40px;
+      padding: 3px;
+      border-radius: var(--ed-radius-md, 8px);
       cursor: pointer;
+      border: 2px solid var(--ed-border, #d4d7dd);
+      transition: border-color 0.15s ease;
+    }
+
+    .color-field input[type="color"]:hover {
+      border-color: var(--ed-accent, #0ea5e9);
     }
 
     .color-field label {
-      font-size: 0.65rem;
-      color: #999;
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      font-size: 0.62rem;
+      color: var(--ed-text-tertiary, #8c919a);
+      letter-spacing: 0.03em;
     }
 
     .dialog-footer {
-      padding: 12px 20px;
-      border-top: 1px solid #eee;
+      padding: 14px 22px;
+      border-top: 1px solid var(--ed-border-subtle, #e8eaed);
       display: flex;
       justify-content: flex-end;
       gap: 8px;
     }
 
     .btn {
-      padding: 8px 16px;
-      border-radius: 5px;
-      font-size: 0.85rem;
+      padding: 8px 18px;
+      border-radius: var(--ed-radius-sm, 6px);
+      font-size: 0.82rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 500;
       cursor: pointer;
-      border: 1px solid #ddd;
-      background: white;
-      color: #555;
+      border: 1px solid var(--ed-border, #d4d7dd);
+      background: var(--ed-bg-primary, #ffffff);
+      color: var(--ed-text-secondary, #5f6672);
+      transition: all 0.15s ease;
     }
 
     .btn:hover {
-      background: #f5f5f5;
-    }
-
-    .btn-primary {
-      background: #4a90d9;
-      color: white;
-      border-color: #4a90d9;
-    }
-
-    .btn-primary:hover {
-      background: #3a7fc8;
+      background: var(--ed-bg-tertiary, #ebedf0);
+      color: var(--ed-text-primary, #1a1d23);
     }
   `;
 
@@ -279,9 +306,9 @@ export class DashboardSettingsDialog extends LitElement {
     return html`
       <div class="field">
         <label class="field-label">Font Family</label>
-        <select .value=${theme.fontFamily || 'Inter, system-ui, sans-serif'}
+        <select .value=${theme.fontFamily || 'DM Sans, system-ui, sans-serif'}
           @change=${(e: Event) => this._emit({ theme: { ...theme, fontFamily: (e.target as HTMLSelectElement).value } })}>
-          <option value="Inter, system-ui, sans-serif">Inter</option>
+          <option value="DM Sans, system-ui, sans-serif">DM Sans</option>
           <option value="'SF Mono', monospace">SF Mono</option>
           <option value="Georgia, serif">Georgia</option>
           <option value="system-ui, sans-serif">System UI</option>
@@ -301,12 +328,12 @@ export class DashboardSettingsDialog extends LitElement {
             <label>Text</label>
           </div>
           <div class="color-field">
-            <input type="color" .value=${theme.primaryColor || '#4a90d9'}
+            <input type="color" .value=${theme.primaryColor || '#0ea5e9'}
               @change=${(e: Event) => this._emit({ theme: { ...theme, primaryColor: (e.target as HTMLInputElement).value } })} />
             <label>Primary</label>
           </div>
           <div class="color-field">
-            <input type="color" .value=${theme.accentColor || '#f5a623'}
+            <input type="color" .value=${theme.accentColor || '#f59e0b'}
               @change=${(e: Event) => this._emit({ theme: { ...theme, accentColor: (e.target as HTMLInputElement).value } })} />
             <label>Accent</label>
           </div>

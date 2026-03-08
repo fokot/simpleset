@@ -10,28 +10,49 @@ export class WidgetConfigPanel extends LitElement {
   static styles = css`
     :host {
       display: block;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
 
     .empty {
-      color: #999;
+      color: var(--ed-text-muted, #adb1b8);
       text-align: center;
-      padding: 24px 0;
+      padding: 32px 16px;
+      font-size: 0.82rem;
+    }
+
+    .empty-icon {
+      width: 44px;
+      height: 44px;
+      margin: 0 auto 12px;
+      border-radius: var(--ed-radius-lg, 12px);
+      background: var(--ed-bg-secondary, #f4f5f7);
+      border: 1px dashed var(--ed-border, #d4d7dd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .empty-icon svg {
+      width: 20px;
+      height: 20px;
+      color: var(--ed-text-muted, #adb1b8);
     }
 
     .section {
-      margin-bottom: 16px;
+      margin-bottom: 18px;
     }
 
     .section-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #999;
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      font-size: 0.62rem;
+      font-weight: 500;
+      color: var(--ed-text-tertiary, #8c919a);
       text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 8px;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #f0f0f0;
+      letter-spacing: 0.1em;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--ed-border-subtle, #e8eaed);
     }
 
     .field {
@@ -40,9 +61,10 @@ export class WidgetConfigPanel extends LitElement {
 
     .field-label {
       display: block;
-      font-size: 0.75rem;
-      color: #666;
-      margin-bottom: 3px;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--ed-text-secondary, #5f6672);
+      margin-bottom: 4px;
     }
 
     input[type="text"],
@@ -51,24 +73,36 @@ export class WidgetConfigPanel extends LitElement {
     textarea,
     select {
       width: 100%;
-      padding: 6px 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-family: inherit;
+      padding: 7px 10px;
+      border: 1px solid var(--ed-border, #d4d7dd);
+      border-radius: var(--ed-radius-sm, 6px);
+      font-size: 0.78rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
       box-sizing: border-box;
-      background: white;
+      background: var(--ed-input-bg, #ffffff);
+      color: var(--ed-text-primary, #1a1d23);
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
     }
 
     input:focus, textarea:focus, select:focus {
       outline: none;
-      border-color: #4a90d9;
-      box-shadow: 0 0 0 2px rgba(74, 144, 217, 0.15);
+      border-color: var(--ed-accent, #0ea5e9);
+      box-shadow: 0 0 0 2px var(--ed-accent-glow, rgba(14, 165, 233, 0.25));
+    }
+
+    input:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      background: var(--ed-bg-tertiary, #ebedf0);
     }
 
     textarea {
       min-height: 60px;
       resize: vertical;
+    }
+
+    select {
+      cursor: pointer;
     }
 
     .row {
@@ -83,17 +117,22 @@ export class WidgetConfigPanel extends LitElement {
     .delete-btn {
       width: 100%;
       padding: 8px;
-      background: #fff5f5;
-      color: #c62828;
-      border: 1px solid #ffcdd2;
-      border-radius: 4px;
+      background: var(--ed-danger-bg, #fef2f2);
+      color: var(--ed-danger, #ef4444);
+      border: 1px solid var(--ed-danger-border, #fecaca);
+      border-radius: var(--ed-radius-sm, 6px);
       cursor: pointer;
-      font-size: 0.8rem;
-      margin-top: 16px;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', system-ui, sans-serif;
+      font-weight: 500;
+      margin-top: 20px;
+      transition: all 0.15s ease;
     }
 
     .delete-btn:hover {
-      background: #ffebee;
+      background: var(--ed-danger, #ef4444);
+      color: white;
+      border-color: var(--ed-danger, #ef4444);
     }
   `;
 
@@ -393,7 +432,16 @@ export class WidgetConfigPanel extends LitElement {
 
   render() {
     if (!this.widget) {
-      return html`<div class="empty">Select a widget to configure</div>`;
+      return html`
+        <div class="empty">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
+            </svg>
+          </div>
+          Select a widget to configure
+        </div>
+      `;
     }
 
     return html`

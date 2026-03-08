@@ -19,11 +19,16 @@ export class DashboardEditorComponent extends LitElement {
   @state()
   private _showPreview = false;
 
+  @state()
+  private _darkMode = false;
+
   private _editorState!: EditorState;
 
   constructor() {
     super();
     this._editorState = new EditorState(this);
+    // Detect system preference
+    this._darkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
 
   connectedCallback() {
@@ -31,14 +36,29 @@ export class DashboardEditorComponent extends LitElement {
     if (this.dashboard) {
       this._editorState.setDashboard(this.dashboard);
     }
-    // Keyboard shortcuts
     this._handleKeydown = this._handleKeydown.bind(this);
     document.addEventListener('keydown', this._handleKeydown);
+
+    // Listen for system theme changes
+    this._mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    this._handleMediaChange = this._handleMediaChange.bind(this);
+    this._mediaQuery.addEventListener('change', this._handleMediaChange);
   }
 
   disconnectedCallback() {
     super.disconnectedCallback();
     document.removeEventListener('keydown', this._handleKeydown);
+    this._mediaQuery?.removeEventListener('change', this._handleMediaChange);
+  }
+
+  private _mediaQuery?: MediaQueryList;
+
+  private _handleMediaChange(e: MediaQueryListEvent) {
+    this._darkMode = e.matches;
+  }
+
+  toggleDarkMode() {
+    this._darkMode = !this._darkMode;
   }
 
   private _handleKeydown(e: KeyboardEvent) {
@@ -53,7 +73,6 @@ export class DashboardEditorComponent extends LitElement {
       e.preventDefault();
       this._handleSave();
     } else if (e.key === 'Delete' || e.key === 'Backspace') {
-      // Only delete if not focused on an input
       const tag = (e.target as HTMLElement).tagName;
       if (tag !== 'INPUT' && tag !== 'TEXTAREA' && tag !== 'SELECT') {
         const sel = this._editorState.selectedWidgetId;
@@ -114,7 +133,6 @@ export class DashboardEditorComponent extends LitElement {
     const widget = this._editorState.selectedWidget;
     if (!widget) return;
 
-    // Handle nested field paths like 'config.content' or 'dataBinding.sql'
     const config = JSON.parse(JSON.stringify(widget.config));
     const parts = field.split('.');
     let obj: any = config;
@@ -146,6 +164,7 @@ export class DashboardEditorComponent extends LitElement {
       case 'preview': this._showPreview = !this._showPreview; break;
       case 'export': this._handleExport(); break;
       case 'import': this._handleImport(); break;
+      case 'toggle-dark': this.toggleDarkMode(); break;
     }
   }
 
@@ -187,12 +206,72 @@ export class DashboardEditorComponent extends LitElement {
   }
 
   static styles = css`
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&display=swap');
+
     :host {
       display: flex;
       flex-direction: column;
       height: 100vh;
-      font-family: var(--dashboard-font-family, 'Inter, system-ui, sans-serif');
-      color: #333;
+      font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+
+      /* Light theme tokens */
+      --ed-bg-primary: #ffffff;
+      --ed-bg-secondary: #f4f5f7;
+      --ed-bg-tertiary: #ebedf0;
+      --ed-bg-canvas: #e8eaed;
+      --ed-border: #d4d7dd;
+      --ed-border-subtle: #e8eaed;
+      --ed-text-primary: #1a1d23;
+      --ed-text-secondary: #5f6672;
+      --ed-text-tertiary: #8c919a;
+      --ed-text-muted: #adb1b8;
+      --ed-accent: #0ea5e9;
+      --ed-accent-hover: #0284c7;
+      --ed-accent-subtle: rgba(14, 165, 233, 0.1);
+      --ed-accent-glow: rgba(14, 165, 233, 0.25);
+      --ed-danger: #ef4444;
+      --ed-danger-bg: #fef2f2;
+      --ed-danger-border: #fecaca;
+      --ed-warning: #f59e0b;
+      --ed-widget-bg: #ffffff;
+      --ed-widget-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+      --ed-widget-shadow-hover: 0 4px 12px rgba(0,0,0,0.08);
+      --ed-overlay: rgba(0, 0, 0, 0.45);
+      --ed-input-bg: #ffffff;
+      --ed-sidebar-width: 248px;
+      --ed-config-width: 280px;
+      --ed-toolbar-height: 52px;
+      --ed-radius-sm: 6px;
+      --ed-radius-md: 8px;
+      --ed-radius-lg: 12px;
+      color: var(--ed-text-primary);
+    }
+
+    :host(.dark) {
+      --ed-bg-primary: #16181d;
+      --ed-bg-secondary: #1c1f26;
+      --ed-bg-tertiary: #23262f;
+      --ed-bg-canvas: #111318;
+      --ed-border: #2d313a;
+      --ed-border-subtle: #23262f;
+      --ed-text-primary: #e4e6ea;
+      --ed-text-secondary: #9da3ae;
+      --ed-text-tertiary: #6b7280;
+      --ed-text-muted: #4b5060;
+      --ed-accent: #38bdf8;
+      --ed-accent-hover: #7dd3fc;
+      --ed-accent-subtle: rgba(56, 189, 248, 0.1);
+      --ed-accent-glow: rgba(56, 189, 248, 0.2);
+      --ed-danger: #f87171;
+      --ed-danger-bg: rgba(239, 68, 68, 0.1);
+      --ed-danger-border: rgba(239, 68, 68, 0.25);
+      --ed-warning: #fbbf24;
+      --ed-widget-bg: #1c1f26;
+      --ed-widget-shadow: 0 1px 3px rgba(0,0,0,0.2), 0 1px 2px rgba(0,0,0,0.15);
+      --ed-widget-shadow-hover: 0 4px 16px rgba(0,0,0,0.3);
+      --ed-overlay: rgba(0, 0, 0, 0.65);
+      --ed-input-bg: #23262f;
     }
 
     .main-area {
@@ -202,46 +281,67 @@ export class DashboardEditorComponent extends LitElement {
     }
 
     .sidebar-left {
-      width: 240px;
-      background: #ffffff;
-      border-right: 1px solid #e0e0e0;
-      padding: 14px;
+      width: var(--ed-sidebar-width);
+      background: var(--ed-bg-primary);
+      border-right: 1px solid var(--ed-border);
+      padding: 16px;
       box-sizing: border-box;
       overflow-y: auto;
       flex-shrink: 0;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .sidebar-right {
-      width: 270px;
-      background: #ffffff;
-      border-left: 1px solid #e0e0e0;
-      padding: 14px;
+      width: var(--ed-config-width);
+      background: var(--ed-bg-primary);
+      border-left: 1px solid var(--ed-border);
+      padding: 16px;
       box-sizing: border-box;
       overflow-y: auto;
       flex-shrink: 0;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
     }
 
     .canvas-area {
       flex: 1;
-      background: #f0f0f0;
-      padding: 16px;
+      background: var(--ed-bg-canvas);
+      padding: 20px;
       box-sizing: border-box;
       overflow: auto;
+      transition: background-color 0.3s ease;
     }
 
     editor-canvas {
       display: block;
-      min-height: calc(100vh - 48px - 32px);
-      border-radius: 4px;
+      min-height: calc(100vh - var(--ed-toolbar-height) - 40px);
+      border-radius: var(--ed-radius-md);
     }
 
     .sidebar-title {
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: #999;
+      font-family: 'DM Mono', 'SF Mono', monospace;
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--ed-text-tertiary);
       text-transform: uppercase;
-      letter-spacing: 0.06em;
-      margin-bottom: 12px;
+      letter-spacing: 0.1em;
+      margin-bottom: 14px;
+    }
+
+    /* Scrollbar styling */
+    .sidebar-left::-webkit-scrollbar,
+    .sidebar-right::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .sidebar-left::-webkit-scrollbar-track,
+    .sidebar-right::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .sidebar-left::-webkit-scrollbar-thumb,
+    .sidebar-right::-webkit-scrollbar-thumb {
+      background: var(--ed-border);
+      border-radius: 4px;
     }
 
     /* Preview mode */
@@ -249,7 +349,7 @@ export class DashboardEditorComponent extends LitElement {
       position: fixed;
       inset: 0;
       z-index: 900;
-      background: white;
+      background: var(--ed-bg-primary);
       overflow: auto;
     }
 
@@ -260,26 +360,43 @@ export class DashboardEditorComponent extends LitElement {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 8px 16px;
-      background: #1a1a1a;
-      color: white;
-      font-size: 0.85rem;
+      padding: 10px 20px;
+      background: #0f1115;
+      color: #e4e6ea;
+      font-size: 0.82rem;
+      font-weight: 500;
+      letter-spacing: 0.01em;
+      border-bottom: 1px solid #2d313a;
     }
 
     .preview-close-btn {
-      padding: 4px 12px;
-      border: 1px solid rgba(255,255,255,0.3);
-      border-radius: 4px;
+      padding: 5px 14px;
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: var(--ed-radius-sm);
       background: transparent;
-      color: white;
+      color: #9da3ae;
       cursor: pointer;
-      font-size: 0.8rem;
+      font-size: 0.78rem;
+      font-family: 'DM Sans', sans-serif;
+      transition: all 0.15s ease;
     }
 
     .preview-close-btn:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.08);
+      color: #e4e6ea;
+      border-color: rgba(255,255,255,0.25);
     }
   `;
+
+  updated(changedProperties: Map<string, any>) {
+    if (changedProperties.has('_darkMode')) {
+      if (this._darkMode) {
+        this.classList.add('dark');
+      } else {
+        this.classList.remove('dark');
+      }
+    }
+  }
 
   render() {
     const state = this._editorState;
@@ -290,6 +407,7 @@ export class DashboardEditorComponent extends LitElement {
         ?can-undo=${state.canUndo}
         ?can-redo=${state.canRedo}
         ?is-dirty=${state.isDirty}
+        ?dark-mode=${this._darkMode}
         @toolbar-action=${this._handleToolbarAction}
       ></editor-toolbar>
 
