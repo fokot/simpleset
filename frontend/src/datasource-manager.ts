@@ -304,22 +304,32 @@ export class DatasourceManager extends LitElement {
     this._testLoading = true;
     this._testResult = null;
     try {
-      const body: TestConnectionRequest = {
-        type: 'postgresql',
-        config: {
-          host: this._formHost,
-          port: this._formPort,
-          database: this._formDatabase,
-          username: this._formUsername,
-          password: this._formPassword,
-          ssl: this._formSsl,
-        },
-      };
-      const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
+      let res: Response;
+      if (this._editingId && !this._formPassword) {
+        // Test saved connection using stored password on backend
+        res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/${this._editingId}/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } else {
+        // Test with form data (new connection or new password entered)
+        const body: TestConnectionRequest = {
+          type: 'postgresql',
+          config: {
+            host: this._formHost,
+            port: this._formPort,
+            database: this._formDatabase,
+            username: this._formUsername,
+            password: this._formPassword,
+            ssl: this._formSsl,
+          },
+        };
+        res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        });
+      }
       const json = await res.json();
       this._testResult = json.data ?? json;
     } catch (e: any) {
