@@ -12,6 +12,7 @@ export default defineConfig({
         'dashboard-component': resolve(__dirname, 'src/dashboard-component.ts'),
         'datasource-manager': resolve(__dirname, 'src/datasource-manager.ts'),
         'dashboard-editor-component': resolve(__dirname, 'src/editor/index.ts'),
+        'main-page': resolve(__dirname, 'src/main-page.ts'),
       };
       server.middlewares.use((req, _res, next) => {
         if (req.url?.startsWith('/frontend/dist/')) {
@@ -41,6 +42,7 @@ export default defineConfig({
         'dashboard-component': resolve(__dirname, 'src/dashboard-component.ts'),
         'datasource-manager': resolve(__dirname, 'src/datasource-manager.ts'),
         'dashboard-editor-component': resolve(__dirname, 'src/editor/index.ts'),
+        'main-page': resolve(__dirname, 'src/main-page.ts'),
       },
       formats: ['es'],
     },
