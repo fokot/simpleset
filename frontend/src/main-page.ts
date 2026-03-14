@@ -889,10 +889,54 @@ export class MainPage extends LitElement {
   @state() private _deleting = false;
   @state() private _toast: { message: string; type: 'success' | 'error' } | null = null;
 
+  private _onPopState = () => { this._applyHash(); };
+
   connectedCallback() {
     super.connectedCallback();
     this._loadSources();
     this._loadDashboards();
+    window.addEventListener('popstate', this._onPopState);
+    this._applyHash();
+  }
+
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    window.removeEventListener('popstate', this._onPopState);
+  }
+
+  private _pushHash(hash: string) {
+    if (window.location.hash !== `#${hash}`) {
+      history.pushState(null, '', `#${hash}`);
+    }
+  }
+
+  private _applyHash() {
+    const hash = window.location.hash.replace('#', '') || 'home';
+    const parts = hash.split('/');
+    const page = parts[0] as Page;
+
+    if (page === 'edit-source' && parts[1]) {
+      const id = parseInt(parts[1]);
+      const source = this._sources.find(s => s.id === id);
+      if (source) {
+        this._openEditSource(source, false);
+      } else {
+        // Sources not loaded yet — wait and retry
+        this._loadSources().then(() => {
+          const s = this._sources.find(s => s.id === id);
+          if (s) this._openEditSource(s, false);
+          else this._navigate('sources');
+        });
+      }
+    } else if (['home', 'sources', 'add-source', 'dashboards', 'settings'].includes(page)) {
+      this._page = page;
+      if (page === 'home') {
+        this._loadSources();
+        this._loadDashboards();
+      }
+    } else {
+      this._page = 'home';
+    }
   }
 
   private async _loadSources() {
@@ -927,6 +971,7 @@ export class MainPage extends LitElement {
 
   private _navigate(page: Page) {
     this._page = page;
+    this._pushHash(page === 'home' ? '' : page);
     if (page === 'home') {
       this._loadSources();
       this._loadDashboards();
@@ -966,9 +1011,10 @@ export class MainPage extends LitElement {
   private _openAddSource() {
     this._resetForm();
     this._page = 'add-source';
+    this._pushHash('add-source');
   }
 
-  private _openEditSource(source: SourceItem) {
+  private _openEditSource(source: SourceItem, push = true) {
     this._editingId = source.id;
     this._editingSource = source;
     this._formName = source.name;
@@ -982,6 +1028,7 @@ export class MainPage extends LitElement {
     this._testResult = null;
     this._deleteConfirm = false;
     this._page = 'edit-source';
+    if (push) this._pushHash(`edit-source/${source.id}`);
   }
 
   private async _testSourceConnection() {
@@ -1055,7 +1102,7 @@ export class MainPage extends LitElement {
       }
       this._showToast(isEdit ? 'Source updated successfully' : 'Source created successfully', 'success');
       this._resetForm();
-      this._page = 'sources';
+      this._navigate('sources');
       await this._loadSources();
     } catch (e: any) {
       this._showToast(`Failed to save: ${e.message}`, 'error');
@@ -1074,7 +1121,7 @@ export class MainPage extends LitElement {
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       this._showToast('Source deleted', 'success');
       this._resetForm();
-      this._page = 'sources';
+      this._navigate('sources');
       await this._loadSources();
     } catch (e: any) {
       this._showToast(`Failed to delete: ${e.message}`, 'error');
