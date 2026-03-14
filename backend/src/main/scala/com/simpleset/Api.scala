@@ -293,7 +293,8 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
       (for {
         _ <- ZIO.logDebug(s"POST /api/v1/datasources - creating datasource '${req.name}' (type=${req.`type`})")
         entity <- dataSourceBackend.create(creator)
-        _ <- registerDataSource(entity)
+        _ <- registerDataSource(entity).catchAll(e =>
+          ZIO.logWarning(s"Failed to register datasource '${req.name}' (id=${entity.id}): ${e.getMessage}"))
         _ <- ZIO.logInfo(s"Datasource '${req.name}' created with id=${entity.id}")
       } yield entity.toResponse)
         .tapError(err => ZIO.logError(s"POST /api/v1/datasources - failed to create '${req.name}': ${err.getMessage}"))
@@ -321,7 +322,8 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
         // Re-register with new config
         _ <- ZIO.logDebug(s"PUT /api/v1/datasources/$id - re-registering datasource with updated config")
         _ <- dataSourceRegistry.unregister(id.toString)
-        _ <- registerDataSource(updated)
+        _ <- registerDataSource(updated).catchAll(e =>
+          ZIO.logWarning(s"Failed to register datasource '${updated.name}' (id=$id): ${e.getMessage}"))
         _ <- ZIO.logInfo(s"Datasource '${updated.name}' (id=$id) updated successfully")
       } yield updated.toResponse)
         .tapError(err => ZIO.logError(s"PUT /api/v1/datasources/$id - update failed: ${err.getMessage}"))
