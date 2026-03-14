@@ -19,13 +19,13 @@
 
     <script>
         // Listen for navigation events from the main-page component
-        document.addEventListener('create-connection', () => {
-            console.log('Navigate to: Create Connection');
+        document.addEventListener('create-source', () => {
+            console.log('Navigate to: Create Source');
             // window.location.href = 'datasource-demo.html';
         });
 
-        document.addEventListener('open-connection', (e) => {
-            console.log('Open connection:', e.detail);
+        document.addEventListener('open-source', (e) => {
+            console.log('Open source:', e.detail);
         });
 
         document.addEventListener('create-dashboard', () => {

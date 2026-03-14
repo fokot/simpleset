@@ -1,7 +1,7 @@
 import { LitElement, html, css, nothing } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 
-interface ConnectionItem {
+interface SourceItem {
   id: number;
   name: string;
   description?: string;
@@ -22,7 +22,7 @@ interface DashboardItem {
   audit?: { updatedAt?: string };
 }
 
-type Page = 'home' | 'connections' | 'dashboards' | 'settings';
+type Page = 'home' | 'sources' | 'dashboards' | 'settings';
 
 @customElement('main-page')
 export class MainPage extends LitElement {
@@ -231,7 +231,7 @@ export class MainPage extends LitElement {
       height: 20px;
     }
 
-    .section-icon.connections {
+    .section-icon.sources {
       background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       color: #2e7d32;
     }
@@ -427,7 +427,7 @@ export class MainPage extends LitElement {
       margin-bottom: 16px;
     }
 
-    .empty-icon.connections {
+    .empty-icon.sources {
       background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
       color: #2e7d32;
     }
@@ -572,29 +572,29 @@ export class MainPage extends LitElement {
   apiBaseUrl = '';
 
   @state() private _page: Page = 'home';
-  @state() private _connections: ConnectionItem[] = [];
+  @state() private _sources: SourceItem[] = [];
   @state() private _dashboards: DashboardItem[] = [];
-  @state() private _loadingConnections = false;
+  @state() private _loadingSources = false;
   @state() private _loadingDashboards = false;
 
   connectedCallback() {
     super.connectedCallback();
-    this._loadConnections();
+    this._loadSources();
     this._loadDashboards();
   }
 
-  private async _loadConnections() {
+  private async _loadSources() {
     if (!this.apiBaseUrl) return;
-    this._loadingConnections = true;
+    this._loadingSources = true;
     try {
       const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const json = await res.json();
-      this._connections = Array.isArray(json) ? json : json.data ?? [];
+      this._sources = Array.isArray(json) ? json : json.data ?? [];
     } catch {
-      this._connections = [];
+      this._sources = [];
     } finally {
-      this._loadingConnections = false;
+      this._loadingSources = false;
     }
   }
 
@@ -616,7 +616,7 @@ export class MainPage extends LitElement {
   private _navigate(page: Page) {
     this._page = page;
     if (page === 'home') {
-      this._loadConnections();
+      this._loadSources();
       this._loadDashboards();
     }
   }
@@ -686,9 +686,9 @@ export class MainPage extends LitElement {
             ${this._iconHome()}
             <span>Home</span>
           </button>
-          <button class="nav-link" ?data-active=${this._page === 'connections'} @click=${() => this._navigate('connections')}>
+          <button class="nav-link" ?data-active=${this._page === 'sources'} @click=${() => this._navigate('sources')}>
             ${this._iconDatabase()}
-            <span>Connections</span>
+            <span>Sources</span>
           </button>
           <button class="nav-link" ?data-active=${this._page === 'dashboards'} @click=${() => this._navigate('dashboards')}>
             ${this._iconGrid()}
@@ -703,7 +703,7 @@ export class MainPage extends LitElement {
 
       <div class="content">
         ${this._page === 'home' ? this._renderHome() : nothing}
-        ${this._page === 'connections' ? this._renderConnections() : nothing}
+        ${this._page === 'sources' ? this._renderSources() : nothing}
         ${this._page === 'dashboards' ? this._renderDashboards() : nothing}
         ${this._page === 'settings' ? this._renderSettings() : nothing}
       </div>
@@ -715,23 +715,23 @@ export class MainPage extends LitElement {
       <div class="page-enter">
         <div class="hero">
           <h1>Welcome back</h1>
-          <p>Manage your data connections and build dashboards</p>
+          <p>Manage your data sources and build dashboards</p>
         </div>
 
-        ${this._renderConnectionsSection()}
+        ${this._renderSourcesSection()}
         ${this._renderDashboardsSection()}
       </div>
     `;
   }
 
-  private _renderConnections() {
+  private _renderSources() {
     return html`
       <div class="page-enter">
         <div class="hero">
-          <h1>Connections</h1>
-          <p>Manage your database connections</p>
+          <h1>Sources</h1>
+          <p>Manage your data sources</p>
         </div>
-        ${this._renderConnectionsSection()}
+        ${this._renderSourcesSection()}
       </div>
     `;
   }
@@ -771,53 +771,53 @@ export class MainPage extends LitElement {
           </div>
           <div class="settings-card" style="animation-delay: 0.2s">
             <h3>Users &amp; Permissions</h3>
-            <p>Manage who can access and edit connections and dashboards.</p>
+            <p>Manage who can access and edit sources and dashboards.</p>
           </div>
         </div>
       </div>
     `;
   }
 
-  private _renderConnectionsSection() {
+  private _renderSourcesSection() {
     return html`
       <div class="section">
         <div class="section-header">
           <div class="section-title">
-            <div class="section-icon connections">${this._iconDatabase()}</div>
-            <h2>Connections</h2>
-            ${this._connections.length > 0 ? html`
-              <span class="section-count">${this._connections.length}</span>
+            <div class="section-icon sources">${this._iconDatabase()}</div>
+            <h2>Sources</h2>
+            ${this._sources.length > 0 ? html`
+              <span class="section-count">${this._sources.length}</span>
             ` : nothing}
           </div>
-          <button class="btn-create" @click=${() => this._dispatchEvent('create-connection')}>
+          <button class="btn-create" @click=${() => this._dispatchEvent('create-source')}>
             ${this._iconPlus()}
-            New Connection
+            New Source
           </button>
         </div>
 
-        ${this._loadingConnections ? html`
+        ${this._loadingSources ? html`
           <div class="loading">
             <div class="spinner"></div>
-            Loading connections...
+            Loading sources...
           </div>
         ` : nothing}
 
-        ${!this._loadingConnections && this._connections.length === 0 ? html`
+        ${!this._loadingSources && this._sources.length === 0 ? html`
           <div class="empty">
-            <div class="empty-icon connections">${this._iconDatabase()}</div>
-            <h3>No connections yet</h3>
+            <div class="empty-icon sources">${this._iconDatabase()}</div>
+            <h3>No sources yet</h3>
             <p>Connect to a PostgreSQL database to start querying your data and building dashboards.</p>
-            <button class="btn-create" @click=${() => this._dispatchEvent('create-connection')}>
+            <button class="btn-create" @click=${() => this._dispatchEvent('create-source')}>
               ${this._iconPlus()}
-              Add your first connection
+              Add your first source
             </button>
           </div>
         ` : nothing}
 
-        ${!this._loadingConnections && this._connections.length > 0 ? html`
+        ${!this._loadingSources && this._sources.length > 0 ? html`
           <div class="cards-grid">
-            ${this._connections.map(conn => html`
-              <div class="card" @click=${() => this._dispatchEvent('open-connection', conn)}>
+            ${this._sources.map(conn => html`
+              <div class="card" @click=${() => this._dispatchEvent('open-source', conn)}>
                 <div class="card-top">
                   <span class="card-type pg">${conn.type}</span>
                 </div>
