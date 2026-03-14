@@ -6,7 +6,7 @@ interface SourceItem {
   name: string;
   description?: string;
   type: string;
-  config: { host: string; port: number; database: string; username?: string; ssl?: boolean };
+  config: { host: string; port: number; database: string; username?: string; ssl?: boolean; password?: string };
   status?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -92,16 +92,16 @@ export class MainPage extends LitElement {
     .logo-mark {
       width: 32px;
       height: 32px;
-      background: var(--amber);
-      border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-weight: 800;
-      font-size: 16px;
-      color: var(--charcoal);
       transform: rotate(-3deg);
       transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .logo-mark svg {
+      width: 32px;
+      height: 32px;
     }
 
     .logo:hover .logo-mark {
@@ -628,6 +628,13 @@ export class MainPage extends LitElement {
       color: var(--text-dim);
     }
 
+    .form-hint {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
     .ssl-toggle {
       display: flex;
       align-items: center;
@@ -1048,7 +1055,7 @@ export class MainPage extends LitElement {
     this._formPort = source.config.port ?? 5432;
     this._formDatabase = source.config.database ?? '';
     this._formUsername = source.config.username ?? '';
-    this._formPassword = '';
+    this._formPassword = source.config.password ?? '';
     this._formSsl = source.config.ssl ?? false;
     this._testResult = null;
     this._deleteConfirm = false;
@@ -1203,7 +1210,16 @@ export class MainPage extends LitElement {
     return html`
       <nav class="topnav">
         <div class="logo" @click=${() => this._navigate('home')}>
-          <div class="logo-mark">S</div>
+          <div class="logo-mark"><svg viewBox="0 0 32 32" fill="none">
+            <rect x="3" y="7" width="17" height="17" rx="5" fill="#2a2520"/>
+            <rect x="12" y="9" width="17" height="17" rx="5" fill="#d4a04a"/>
+            <g opacity="0.55">
+              <rect x="14.5" y="13" width="3" height="3" rx="0.75" fill="#fff"/>
+              <rect x="19.5" y="13" width="3" height="3" rx="0.75" fill="#fff"/>
+              <rect x="14.5" y="18" width="3" height="3" rx="0.75" fill="#fff"/>
+              <rect x="19.5" y="18" width="3" height="3" rx="0.75" fill="#fff"/>
+            </g>
+          </svg></div>
           <span class="logo-text">SimpleSet</span>
         </div>
 
@@ -1351,7 +1367,7 @@ export class MainPage extends LitElement {
 
             <div class="form-group">
               <label>Password ${isEdit ? '' : '*'}</label>
-              <input type="password" .value=${this._formPassword}
+              <input type=${this._formPassword.startsWith('$') ? 'text' : 'password'} .value=${this._formPassword}
                 @input=${(e: Event) => { this._formPassword = (e.target as HTMLInputElement).value; }}
                 placeholder=${isEdit ? 'Leave blank to keep current' : 'Enter password'} />
             </div>
@@ -1362,6 +1378,10 @@ export class MainPage extends LitElement {
                   @change=${(e: Event) => { this._formSsl = (e.target as HTMLInputElement).checked; }} />
                 <label for="ssl-check">Enable SSL</label>
               </div>
+            </div>
+
+            <div class="form-group full-width">
+              <span class="form-hint">Prefix with $ to use an environment variable (e.g. $DB_PASSWORD)</span>
             </div>
           </div>
 

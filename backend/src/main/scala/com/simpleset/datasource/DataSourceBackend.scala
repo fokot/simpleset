@@ -36,7 +36,8 @@ case class DataSourceEntity(
         port = port,
         database = database,
         username = username,
-        ssl = ssl
+        ssl = ssl,
+        password = if password.startsWith("$") then Some(password) else None
       ),
       status = status,
       errorMessage = errorMessage,
@@ -44,11 +45,17 @@ case class DataSourceEntity(
       updatedAt = updatedAt
     )
 
+  private def resolveEnv(value: String): String =
+    if value.startsWith("$") then
+      val envName = value.drop(1)
+      sys.env.getOrElse(envName, throw new RuntimeException(s"Environment variable '$envName' is not set"))
+    else value
+
   def toPostgresConfig: PostgresConfig =
     PostgresConfig(
-      jdbcUrl = s"jdbc:postgresql://$host:$port/$database${if ssl then "?ssl=true&sslmode=require" else ""}",
-      username = username,
-      password = password
+      jdbcUrl = s"jdbc:postgresql://${resolveEnv(host)}:$port/${resolveEnv(database)}${if ssl then "?ssl=true&sslmode=require" else ""}",
+      username = resolveEnv(username),
+      password = resolveEnv(password)
     )
 
 object DataSourceEntity:

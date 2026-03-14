@@ -215,9 +215,19 @@ class Api(backend: Backend, dataSourceRegistry: DataSourceRegistry, dataSourceBa
   // Datasource routes
   // ============================================================================
 
+  private def resolveEnv(value: String): String =
+    if value.startsWith("$") then
+      val envName = value.drop(1)
+      sys.env.getOrElse(envName, throw new RuntimeException(s"Environment variable '$envName' is not set"))
+    else value
+
   private def testPostgresConnection(config: DatabaseConnectionConfig): Task[TestConnectionResponse] =
-    val jdbcUrl = s"jdbc:postgresql://${config.host}:${config.port}/${config.database}${if config.ssl then "?ssl=true&sslmode=require" else ""}"
-    val pgConfig = PostgresConfig(jdbcUrl, config.username, config.password)
+    val host = resolveEnv(config.host)
+    val database = resolveEnv(config.database)
+    val username = resolveEnv(config.username)
+    val password = resolveEnv(config.password)
+    val jdbcUrl = s"jdbc:postgresql://$host:${config.port}/$database${if config.ssl then "?ssl=true&sslmode=require" else ""}"
+    val pgConfig = PostgresConfig(jdbcUrl, username, password)
     val startTime = System.currentTimeMillis()
     ZIO.logDebug(s"Testing connection to ${config.host}:${config.port}/${config.database}") *>
     PostgresDataSource.make(pgConfig).provideLayer(ZLayer.succeed(scope)).flatMap { ds =>

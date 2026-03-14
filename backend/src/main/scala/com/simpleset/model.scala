@@ -149,7 +149,8 @@ object model {
     port: Int,
     database: String,
     username: String,
-    ssl: Boolean
+    ssl: Boolean,
+    password: Option[String] = None
   )
 
   object DataSourceResponseConfig:

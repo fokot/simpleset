@@ -171,6 +171,7 @@ export const DataSourceResponseConfigSchema = z.object({
   database: z.string(),
   username: z.string(),
   ssl: z.boolean(),
+  password: z.string().optional(),
 });
 
 /**
