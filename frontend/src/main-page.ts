@@ -6,7 +6,10 @@ interface SourceItem {
   name: string;
   description?: string;
   type: string;
-  config: { host: string; port: number; database: string };
+  config: { host: string; port: number; database: string; username?: string; ssl?: boolean };
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 interface DashboardItem {
@@ -22,7 +25,7 @@ interface DashboardItem {
   audit?: { updatedAt?: string };
 }
 
-type Page = 'home' | 'sources' | 'dashboards' | 'settings';
+type Page = 'home' | 'sources' | 'add-source' | 'edit-source' | 'dashboards' | 'settings';
 
 @customElement('main-page')
 export class MainPage extends LitElement {
@@ -530,6 +533,293 @@ export class MainPage extends LitElement {
       to { transform: rotate(360deg); }
     }
 
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 14px 24px;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.875rem;
+      font-weight: 500;
+      z-index: 200;
+      animation: slideIn 0.3s ease;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+    .toast-success { background: var(--success); }
+    .toast-error { background: var(--danger); }
+    @keyframes slideIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* ── Source form ── */
+    .form-card {
+      background: var(--surface);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 14px;
+      padding: 32px;
+      animation: fadeUp 0.5s ease both;
+      max-width: 720px;
+    }
+
+    .form-card h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 0 0 24px;
+      color: var(--charcoal);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .form-card h3 svg {
+      width: 22px;
+      height: 22px;
+      color: var(--amber);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .form-group label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 10px 14px;
+      border: 1px solid var(--cream-dark);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      background: var(--cream);
+      color: var(--charcoal);
+      transition: all 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--amber);
+      background: #fff;
+      box-shadow: 0 0 0 3px var(--amber-glow);
+    }
+
+    .form-group input::placeholder {
+      color: var(--text-dim);
+    }
+
+    .ssl-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-top: 24px;
+    }
+
+    .ssl-toggle input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: var(--amber);
+    }
+
+    .ssl-toggle label {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--charcoal);
+      cursor: pointer;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--cream-dark);
+    }
+
+    .form-actions-right {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn-test {
+      background: var(--cream);
+      color: var(--success);
+      border: 1px solid var(--cream-dark);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-test:hover:not(:disabled) {
+      background: #e8f5e9;
+      border-color: #c8e6c9;
+    }
+
+    .btn-test:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-cancel {
+      background: var(--cream);
+      color: var(--text-muted);
+      border: 1px solid var(--cream-dark);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-cancel:hover {
+      background: var(--cream-dark);
+      color: var(--charcoal);
+    }
+
+    .btn-save {
+      background: var(--charcoal);
+      color: #fff;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .btn-save:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(42, 37, 32, 0.25);
+    }
+
+    .btn-save:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .test-result {
+      margin-top: 16px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .test-result.success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+
+    .test-result.error {
+      background: #fef2f2;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+    }
+
+    .btn-delete {
+      background: none;
+      color: var(--danger);
+      border: 1px solid var(--cream-dark);
+      padding: 10px 20px;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-delete:hover:not(:disabled) {
+      background: #fef2f2;
+      border-color: #fecaca;
+    }
+
+    .btn-delete:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .delete-confirm {
+      margin-top: 16px;
+      padding: 16px;
+      border-radius: 10px;
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      animation: fadeUp 0.3s ease both;
+    }
+
+    .delete-confirm p {
+      font-size: 0.875rem;
+      color: #b91c1c;
+      margin: 0 0 12px;
+    }
+
+    .delete-confirm-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .source-meta {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 14px 18px;
+      background: var(--cream);
+      border-radius: 10px;
+      margin-bottom: 24px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-family: 'Source Code Pro', monospace;
+      flex-wrap: wrap;
+    }
+
+    .source-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .source-meta-item svg {
+      width: 14px;
+      height: 14px;
+      opacity: 0.5;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       .topnav {
@@ -555,6 +845,10 @@ export class MainPage extends LitElement {
       .section-header {
         flex-wrap: wrap;
       }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
     }
 
     @media (max-width: 480px) {
@@ -576,6 +870,24 @@ export class MainPage extends LitElement {
   @state() private _dashboards: DashboardItem[] = [];
   @state() private _loadingSources = false;
   @state() private _loadingDashboards = false;
+
+  // Add source form
+  @state() private _formName = '';
+  @state() private _formDescription = '';
+  @state() private _formHost = 'localhost';
+  @state() private _formPort = 5432;
+  @state() private _formDatabase = '';
+  @state() private _formUsername = '';
+  @state() private _formPassword = '';
+  @state() private _formSsl = false;
+  @state() private _testResult: { success: boolean; message: string; latency?: number } | null = null;
+  @state() private _testLoading = false;
+  @state() private _saving = false;
+  @state() private _editingId: number | null = null;
+  @state() private _editingSource: SourceItem | null = null;
+  @state() private _deleteConfirm = false;
+  @state() private _deleting = false;
+  @state() private _toast: { message: string; type: 'success' | 'error' } | null = null;
 
   connectedCallback() {
     super.connectedCallback();
@@ -627,6 +939,148 @@ export class MainPage extends LitElement {
       bubbles: true,
       composed: true,
     }));
+  }
+
+  // ── Source form ──
+
+  private _showToast(message: string, type: 'success' | 'error') {
+    this._toast = { message, type };
+    setTimeout(() => { this._toast = null; }, 3000);
+  }
+
+  private _resetForm() {
+    this._formName = '';
+    this._formDescription = '';
+    this._formHost = 'localhost';
+    this._formPort = 5432;
+    this._formDatabase = '';
+    this._formUsername = '';
+    this._formPassword = '';
+    this._formSsl = false;
+    this._testResult = null;
+    this._editingId = null;
+    this._editingSource = null;
+    this._deleteConfirm = false;
+  }
+
+  private _openAddSource() {
+    this._resetForm();
+    this._page = 'add-source';
+  }
+
+  private _openEditSource(source: SourceItem) {
+    this._editingId = source.id;
+    this._editingSource = source;
+    this._formName = source.name;
+    this._formDescription = source.description ?? '';
+    this._formHost = source.config.host ?? 'localhost';
+    this._formPort = source.config.port ?? 5432;
+    this._formDatabase = source.config.database ?? '';
+    this._formUsername = source.config.username ?? '';
+    this._formPassword = '';
+    this._formSsl = source.config.ssl ?? false;
+    this._testResult = null;
+    this._deleteConfirm = false;
+    this._page = 'edit-source';
+  }
+
+  private async _testSourceConnection() {
+    this._testLoading = true;
+    this._testResult = null;
+    try {
+      let res: Response;
+      if (this._editingId && !this._formPassword) {
+        res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/${this._editingId}/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+      } else {
+        res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/test`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'postgresql',
+            config: {
+              host: this._formHost,
+              port: this._formPort,
+              database: this._formDatabase,
+              username: this._formUsername,
+              password: this._formPassword,
+              ssl: this._formSsl,
+            },
+          }),
+        });
+      }
+      const json = await res.json();
+      this._testResult = json.data ?? json;
+    } catch (e: any) {
+      this._testResult = { success: false, message: e.message };
+    } finally {
+      this._testLoading = false;
+    }
+  }
+
+  private async _saveSource() {
+    this._saving = true;
+    const isEdit = !!this._editingId;
+    try {
+      const body: Record<string, unknown> = {
+        name: this._formName,
+        description: this._formDescription || undefined,
+        type: 'postgresql',
+        config: {
+          host: this._formHost,
+          port: this._formPort,
+          database: this._formDatabase,
+          username: this._formUsername,
+          password: this._formPassword,
+          ssl: this._formSsl,
+        },
+      };
+      if (isEdit) body.id = this._editingId;
+
+      const res = await fetch(
+        isEdit
+          ? `${this.apiBaseUrl}/api/v1/datasources/${this._editingId}`
+          : `${this.apiBaseUrl}/api/v1/datasources`,
+        {
+          method: isEdit ? 'PUT' : 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error?.message ?? `HTTP ${res.status}`);
+      }
+      this._showToast(isEdit ? 'Source updated successfully' : 'Source created successfully', 'success');
+      this._resetForm();
+      this._page = 'sources';
+      await this._loadSources();
+    } catch (e: any) {
+      this._showToast(`Failed to save: ${e.message}`, 'error');
+    } finally {
+      this._saving = false;
+    }
+  }
+
+  private async _deleteSource() {
+    if (!this._editingId) return;
+    this._deleting = true;
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/api/v1/datasources/${this._editingId}`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      this._showToast('Source deleted', 'success');
+      this._resetForm();
+      this._page = 'sources';
+      await this._loadSources();
+    } catch (e: any) {
+      this._showToast(`Failed to delete: ${e.message}`, 'error');
+    } finally {
+      this._deleting = false;
+    }
   }
 
   // ── Icons ──
@@ -686,7 +1140,7 @@ export class MainPage extends LitElement {
             ${this._iconHome()}
             <span>Home</span>
           </button>
-          <button class="nav-link" ?data-active=${this._page === 'sources'} @click=${() => this._navigate('sources')}>
+          <button class="nav-link" ?data-active=${this._page === 'sources' || this._page === 'add-source' || this._page === 'edit-source'} @click=${() => this._navigate('sources')}>
             ${this._iconDatabase()}
             <span>Sources</span>
           </button>
@@ -701,9 +1155,15 @@ export class MainPage extends LitElement {
         </div>
       </nav>
 
+      ${this._toast ? html`
+        <div class="toast toast-${this._toast.type}">${this._toast.message}</div>
+      ` : nothing}
+
       <div class="content">
         ${this._page === 'home' ? this._renderHome() : nothing}
         ${this._page === 'sources' ? this._renderSources() : nothing}
+        ${this._page === 'add-source' ? this._renderSourceForm() : nothing}
+        ${this._page === 'edit-source' ? this._renderSourceForm() : nothing}
         ${this._page === 'dashboards' ? this._renderDashboards() : nothing}
         ${this._page === 'settings' ? this._renderSettings() : nothing}
       </div>
@@ -732,6 +1192,140 @@ export class MainPage extends LitElement {
           <p>Manage your data sources</p>
         </div>
         ${this._renderSourcesSection()}
+      </div>
+    `;
+  }
+
+  private _renderSourceForm() {
+    const isEdit = !!this._editingId;
+    const canSave = this._formName && this._formHost && this._formDatabase
+      && (isEdit || (this._formUsername && this._formPassword));
+
+    return html`
+      <div class="page-enter">
+        <div class="hero">
+          <h1>${isEdit ? 'Edit Source' : 'New Source'}</h1>
+          <p>${isEdit ? 'Update your data source configuration' : 'Connect to a PostgreSQL database'}</p>
+        </div>
+
+        <div class="form-card">
+          <h3>${this._iconDatabase()} Connection Details</h3>
+
+          ${isEdit && this._editingSource ? html`
+            <div class="source-meta">
+              ${this._editingSource.createdAt ? html`
+                <span class="source-meta-item">
+                  ${this._iconClock()}
+                  Created ${this._formatDate(this._editingSource.createdAt)}
+                </span>
+              ` : nothing}
+              ${this._editingSource.updatedAt ? html`
+                <span class="source-meta-item">
+                  ${this._iconClock()}
+                  Updated ${this._formatDate(this._editingSource.updatedAt)}
+                </span>
+              ` : nothing}
+            </div>
+          ` : nothing}
+
+          <div class="form-grid">
+            <div class="form-group full-width">
+              <label>Name *</label>
+              <input type="text" .value=${this._formName}
+                @input=${(e: Event) => { this._formName = (e.target as HTMLInputElement).value; }}
+                placeholder="My Database" />
+            </div>
+
+            <div class="form-group full-width">
+              <label>Description</label>
+              <input type="text" .value=${this._formDescription}
+                @input=${(e: Event) => { this._formDescription = (e.target as HTMLInputElement).value; }}
+                placeholder="Optional description" />
+            </div>
+
+            <div class="form-group">
+              <label>Host *</label>
+              <input type="text" .value=${this._formHost}
+                @input=${(e: Event) => { this._formHost = (e.target as HTMLInputElement).value; }}
+                placeholder="localhost" />
+            </div>
+
+            <div class="form-group">
+              <label>Port *</label>
+              <input type="number" .value=${String(this._formPort)}
+                @input=${(e: Event) => { this._formPort = parseInt((e.target as HTMLInputElement).value) || 5432; }}
+                placeholder="5432" />
+            </div>
+
+            <div class="form-group">
+              <label>Database *</label>
+              <input type="text" .value=${this._formDatabase}
+                @input=${(e: Event) => { this._formDatabase = (e.target as HTMLInputElement).value; }}
+                placeholder="mydb" />
+            </div>
+
+            <div class="form-group">
+              <label>Username ${isEdit ? '' : '*'}</label>
+              <input type="text" .value=${this._formUsername}
+                @input=${(e: Event) => { this._formUsername = (e.target as HTMLInputElement).value; }}
+                placeholder=${isEdit ? 'Leave blank to keep current' : 'postgres'} />
+            </div>
+
+            <div class="form-group">
+              <label>Password ${isEdit ? '' : '*'}</label>
+              <input type="password" .value=${this._formPassword}
+                @input=${(e: Event) => { this._formPassword = (e.target as HTMLInputElement).value; }}
+                placeholder=${isEdit ? 'Leave blank to keep current' : 'Enter password'} />
+            </div>
+
+            <div class="form-group">
+              <div class="ssl-toggle">
+                <input type="checkbox" id="ssl-check" .checked=${this._formSsl}
+                  @change=${(e: Event) => { this._formSsl = (e.target as HTMLInputElement).checked; }} />
+                <label for="ssl-check">Enable SSL</label>
+              </div>
+            </div>
+          </div>
+
+          ${this._testResult ? html`
+            <div class="test-result ${this._testResult.success ? 'success' : 'error'}">
+              ${this._testResult.success ? '\u2713' : '\u2717'} ${this._testResult.message}
+              ${this._testResult.latency != null ? html` (${this._testResult.latency}ms)` : nothing}
+            </div>
+          ` : nothing}
+
+          <div class="form-actions">
+            <button class="btn-test" @click=${this._testSourceConnection} ?disabled=${this._testLoading}>
+              ${this._iconPlug()}
+              ${this._testLoading ? 'Testing...' : 'Test Connection'}
+            </button>
+            <div class="form-actions-right">
+              ${isEdit ? html`
+                <button class="btn-delete" @click=${() => { this._deleteConfirm = true; }}
+                  ?disabled=${this._deleting}>
+                  Delete
+                </button>
+              ` : nothing}
+              <button class="btn-cancel" @click=${() => this._navigate('sources')}>Cancel</button>
+              <button class="btn-save" @click=${this._saveSource}
+                ?disabled=${!canSave || this._saving}>
+                ${this._saving ? 'Saving...' : (isEdit ? 'Update Source' : 'Save Source')}
+              </button>
+            </div>
+          </div>
+
+          ${this._deleteConfirm ? html`
+            <div class="delete-confirm">
+              <p>Are you sure you want to delete this source? This cannot be undone.</p>
+              <div class="delete-confirm-actions">
+                <button class="btn-cancel" @click=${() => { this._deleteConfirm = false; }}>Cancel</button>
+                <button class="btn-delete" @click=${this._deleteSource} ?disabled=${this._deleting}>
+                  ${this._deleting ? 'Deleting...' : 'Yes, Delete'}
+                </button>
+              </div>
+            </div>
+          ` : nothing}
+        </div>
       </div>
     `;
   }
@@ -789,7 +1383,7 @@ export class MainPage extends LitElement {
               <span class="section-count">${this._sources.length}</span>
             ` : nothing}
           </div>
-          <button class="btn-create" @click=${() => this._dispatchEvent('create-source')}>
+          <button class="btn-create" @click=${() => this._openAddSource()}>
             ${this._iconPlus()}
             New Source
           </button>
@@ -807,7 +1401,7 @@ export class MainPage extends LitElement {
             <div class="empty-icon sources">${this._iconDatabase()}</div>
             <h3>No sources yet</h3>
             <p>Connect to a PostgreSQL database to start querying your data and building dashboards.</p>
-            <button class="btn-create" @click=${() => this._dispatchEvent('create-source')}>
+            <button class="btn-create" @click=${() => this._openAddSource()}>
               ${this._iconPlus()}
               Add your first source
             </button>
@@ -817,7 +1411,7 @@ export class MainPage extends LitElement {
         ${!this._loadingSources && this._sources.length > 0 ? html`
           <div class="cards-grid">
             ${this._sources.map(conn => html`
-              <div class="card" @click=${() => this._dispatchEvent('open-source', conn)}>
+              <div class="card" @click=${() => this._openEditSource(conn)}>
                 <div class="card-top">
                   <span class="card-type pg">${conn.type}</span>
                 </div>
