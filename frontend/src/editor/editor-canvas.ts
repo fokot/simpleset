@@ -18,10 +18,12 @@ export class EditorCanvas extends LitElement {
       position: relative;
       min-height: 100%;
       background: #ffffff;
+      border-radius: 14px;
+      border: 1px solid rgba(0,0,0,0.06);
       box-sizing: border-box;
-      /* Square grid pattern using CSS background */
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
       --cell-size: 20px;
-      --grid-color: #e0e0e0;
+      --grid-color: #e8e3db;
       background-image:
         linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
         linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
@@ -35,7 +37,7 @@ export class EditorCanvas extends LitElement {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
       gap: 16px;
-      padding: 16px;
+      padding: 20px;
       min-height: 100%;
       box-sizing: border-box;
     }

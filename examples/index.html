@@ -15,15 +15,10 @@
     <script type="module" src="/frontend/dist/main-page.js"></script>
 </head>
 <body>
-    <main-page api-base-url="http://localhost:8080"></main-page>
+    <main-page api-base-url="http://localhost:3000"></main-page>
 
     <script>
         // Listen for navigation events from the main-page component
-        document.addEventListener('create-dashboard', () => {
-            console.log('Navigate to: Create Dashboard');
-            // window.location.href = 'editor-demo.html';
-        });
-
         document.addEventListener('open-dashboard', (e) => {
             console.log('Open dashboard:', e.detail);
         });

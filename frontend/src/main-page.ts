@@ -25,7 +25,7 @@ interface DashboardItem {
   audit?: { updatedAt?: string };
 }
 
-type Page = 'home' | 'sources' | 'add-source' | 'edit-source' | 'dashboards' | 'settings';
+type Page = 'home' | 'sources' | 'add-source' | 'edit-source' | 'dashboards' | 'editor' | 'settings';
 
 @customElement('main-page')
 export class MainPage extends LitElement {
@@ -820,6 +820,20 @@ export class MainPage extends LitElement {
       opacity: 0.5;
     }
 
+    /* ── Editor layout ── */
+    .editor-wrapper {
+      height: calc(100vh - 64px);
+      padding-bottom: 4px;
+      background: var(--cream);
+      overflow: hidden;
+    }
+
+    .editor-wrapper dashboard-editor-component {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
     /* ── Responsive ── */
     @media (max-width: 768px) {
       .topnav {
@@ -844,6 +858,11 @@ export class MainPage extends LitElement {
 
       .section-header {
         flex-wrap: wrap;
+      }
+
+      .editor-wrapper {
+        height: calc(100vh - 56px);
+        padding-bottom: 4px;
       }
 
       .form-grid {
@@ -928,8 +947,11 @@ export class MainPage extends LitElement {
           else this._navigate('sources');
         });
       }
-    } else if (['home', 'sources', 'add-source', 'dashboards', 'settings'].includes(page)) {
+    } else if (['home', 'sources', 'add-source', 'dashboards', 'editor', 'settings'].includes(page)) {
       this._page = page;
+      if (page === 'editor') {
+        import('./editor/index.js');
+      }
       if (page === 'home') {
         this._loadSources();
         this._loadDashboards();
@@ -972,6 +994,9 @@ export class MainPage extends LitElement {
   private _navigate(page: Page) {
     this._page = page;
     this._pushHash(page === 'home' ? '' : page);
+    if (page === 'editor') {
+      import('./editor/index.js');
+    }
     if (page === 'home') {
       this._loadSources();
       this._loadDashboards();
@@ -1191,7 +1216,7 @@ export class MainPage extends LitElement {
             ${this._iconDatabase()}
             <span>Sources</span>
           </button>
-          <button class="nav-link" ?data-active=${this._page === 'dashboards'} @click=${() => this._navigate('dashboards')}>
+          <button class="nav-link" ?data-active=${this._page === 'dashboards' || this._page === 'editor'} @click=${() => this._navigate('dashboards')}>
             ${this._iconGrid()}
             <span>Dashboards</span>
           </button>
@@ -1206,14 +1231,20 @@ export class MainPage extends LitElement {
         <div class="toast toast-${this._toast.type}">${this._toast.message}</div>
       ` : nothing}
 
-      <div class="content">
-        ${this._page === 'home' ? this._renderHome() : nothing}
-        ${this._page === 'sources' ? this._renderSources() : nothing}
-        ${this._page === 'add-source' ? this._renderSourceForm() : nothing}
-        ${this._page === 'edit-source' ? this._renderSourceForm() : nothing}
-        ${this._page === 'dashboards' ? this._renderDashboards() : nothing}
-        ${this._page === 'settings' ? this._renderSettings() : nothing}
-      </div>
+      ${this._page === 'editor' ? html`
+        <div class="editor-wrapper">
+          <dashboard-editor-component></dashboard-editor-component>
+        </div>
+      ` : html`
+        <div class="content">
+          ${this._page === 'home' ? this._renderHome() : nothing}
+          ${this._page === 'sources' ? this._renderSources() : nothing}
+          ${this._page === 'add-source' ? this._renderSourceForm() : nothing}
+          ${this._page === 'edit-source' ? this._renderSourceForm() : nothing}
+          ${this._page === 'dashboards' ? this._renderDashboards() : nothing}
+          ${this._page === 'settings' ? this._renderSettings() : nothing}
+        </div>
+      `}
     `;
   }
 
@@ -1495,7 +1526,7 @@ export class MainPage extends LitElement {
               <span class="section-count">${this._dashboards.length}</span>
             ` : nothing}
           </div>
-          <button class="btn-create" @click=${() => this._dispatchEvent('create-dashboard')}>
+          <button class="btn-create" @click=${() => this._navigate('editor')}>
             ${this._iconPlus()}
             New Dashboard
           </button>
@@ -1513,7 +1544,7 @@ export class MainPage extends LitElement {
             <div class="empty-icon dashboards">${this._iconGrid()}</div>
             <h3>No dashboards yet</h3>
             <p>Create your first dashboard to visualize data with charts, metrics, and tables.</p>
-            <button class="btn-create" @click=${() => this._dispatchEvent('create-dashboard')}>
+            <button class="btn-create" @click=${() => this._navigate('editor')}>
               ${this._iconPlus()}
               Create your first dashboard
             </button>
