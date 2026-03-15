@@ -90,7 +90,7 @@ export class EditorToolbar extends LitElement {
       transition: all 0.15s;
     }
 
-    .tool-btn:hover {
+    .tool-btn:hover:not(:disabled) {
       background: #e8e3db;
       color: #2a2520;
     }
@@ -104,11 +104,6 @@ export class EditorToolbar extends LitElement {
     .tool-btn:disabled {
       opacity: 0.35;
       cursor: default;
-    }
-
-    .tool-btn:disabled:hover {
-      background: transparent;
-      color: #8a8279;
     }
 
     .tool-btn svg {
@@ -146,19 +141,26 @@ export class EditorToolbar extends LitElement {
     .btn-primary:disabled {
       opacity: 0.4;
     }
-
   `;
 
-  @property({ type: String })
-  dashboardName = 'Untitled Dashboard';
+  @property({ type: String }) dashboardName = 'Untitled Dashboard';
+  @property({ type: Boolean }) canUndo = false;
+  @property({ type: Boolean }) canRedo = false;
 
   private _onNameInput(e: Event) {
     this.dashboardName = (e.target as HTMLInputElement).value;
     this.dispatchEvent(new CustomEvent('name-change', {
       detail: this.dashboardName,
-      bubbles: true,
-      composed: true,
+      bubbles: true, composed: true,
     }));
+  }
+
+  private _onUndo() {
+    this.dispatchEvent(new CustomEvent('undo', { bubbles: true, composed: true }));
+  }
+
+  private _onRedo() {
+    this.dispatchEvent(new CustomEvent('redo', { bubbles: true, composed: true }));
   }
 
   render() {
@@ -172,21 +174,15 @@ export class EditorToolbar extends LitElement {
         <span class="toolbar-badge">Draft</span>
       </div>
       <div class="toolbar-center">
-        <button class="tool-btn" disabled title="Undo">
+        <button class="tool-btn" ?disabled=${!this.canUndo} title="Undo (Ctrl+Z)" @click=${this._onUndo}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
         </button>
-        <button class="tool-btn" disabled title="Redo">
+        <button class="tool-btn" ?disabled=${!this.canRedo} title="Redo (Ctrl+Shift+Z)" @click=${this._onRedo}>
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.13-9.36L23 10"/></svg>
         </button>
         <div class="divider-h"></div>
         <button class="tool-btn" data-active title="Select">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>
-        </button>
-        <button class="tool-btn" title="Move">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
-        </button>
-        <button class="tool-btn" title="Zoom in">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
         </button>
       </div>
       <div class="toolbar-right">

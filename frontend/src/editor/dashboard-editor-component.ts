@@ -1,10 +1,25 @@
 import { LitElement, html, css } from 'lit';
-import { customElement } from 'lit/decorators.js';
+import { customElement, state } from 'lit/decorators.js';
+import { DashboardWidget, WidgetType } from '../types/dashboard-types.js';
+import { EditorState } from './editor-state.js';
+import { OccupancyMap } from './occupancy-map.js';
+import { CommandHistory, CompositeCommand } from './command-history.js';
+import {
+  AddWidgetCommand, DeleteWidgetCommand, MoveWidgetCommand,
+  ResizeWidgetCommand, DuplicateWidgetCommand, UpdatePropertyCommand,
+} from './editor-commands.js';
+import { WIDGET_DEFAULTS, createDefaultPosition } from './widget-defaults.js';
 import './editor-toolbar.js';
 import './editor-canvas.js';
+import './editor-widget-palette.js';
+import './editor-property-panel.js';
 
 @customElement('dashboard-editor-component')
 export class DashboardEditorComponent extends LitElement {
+  private _editorState = new EditorState(this);
+  private _occupancy = new OccupancyMap(12);
+  private _history = new CommandHistory(() => this.requestUpdate());
+
   static styles = css`
     :host {
       display: flex;
@@ -50,15 +65,6 @@ export class DashboardEditorComponent extends LitElement {
       flex-direction: column;
     }
 
-    .sidebar-section {
-      padding: 20px;
-      border-bottom: 1px solid var(--cream-dark);
-    }
-
-    .sidebar-section:last-child {
-      border-bottom: none;
-    }
-
     .canvas-area {
       flex: 1;
       background: var(--cream);
@@ -72,177 +78,300 @@ export class DashboardEditorComponent extends LitElement {
       display: block;
       min-height: calc(100% - 60px);
     }
-
-    .sidebar-title {
-      font-size: 0.7rem;
-      font-weight: 700;
-      color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      margin-bottom: 14px;
-    }
-
-    .sidebar-hint {
-      color: var(--text-dim);
-      font-size: 0.82rem;
-      line-height: 1.5;
-    }
-
-    .widget-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .widget-item {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      background: var(--cream);
-      cursor: grab;
-      transition: all 0.2s;
-      font-size: 0.85rem;
-      font-weight: 500;
-      color: var(--charcoal);
-    }
-
-    .widget-item:hover {
-      background: var(--amber-glow);
-      color: var(--charcoal);
-    }
-
-    .widget-item:active {
-      cursor: grabbing;
-    }
-
-    .widget-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .widget-icon svg {
-      width: 16px;
-      height: 16px;
-    }
-
-    .widget-icon.chart {
-      background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-      color: #1565c0;
-    }
-
-    .widget-icon.table {
-      background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-      color: #2e7d32;
-    }
-
-    .widget-icon.metric {
-      background: linear-gradient(135deg, #fff3e0, #ffe0b2);
-      color: #e65100;
-    }
-
-    .widget-icon.text {
-      background: linear-gradient(135deg, #f3e5f5, #e1bee7);
-      color: #7b1fa2;
-    }
-
-    .config-empty {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      padding: 32px 16px;
-      color: var(--text-dim);
-    }
-
-    .config-empty-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      background: var(--cream);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 12px;
-    }
-
-    .config-empty-icon svg {
-      width: 24px;
-      height: 24px;
-      color: var(--text-dim);
-    }
-
-    .config-empty p {
-      font-size: 0.82rem;
-      line-height: 1.5;
-      margin: 0;
-    }
   `;
 
-  private _iconBarChart() {
-    return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`;
+  connectedCallback() {
+    super.connectedCallback();
+    this.addEventListener('keydown', this._onKeyDown);
   }
 
-  private _iconTable() {
-    return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/></svg>`;
+  disconnectedCallback() {
+    super.disconnectedCallback();
+    this.removeEventListener('keydown', this._onKeyDown);
   }
 
-  private _iconHash() {
-    return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg>`;
+  // --- Event handlers from canvas ---
+
+  private _onAddWidget(e: CustomEvent) {
+    const { type, x, y, width, height } = e.detail as {
+      type: WidgetType; x: number; y: number; width: number; height: number;
+    };
+    const defaults = WIDGET_DEFAULTS[type];
+    const widget: DashboardWidget = {
+      id: this._editorState.generateId(),
+      title: defaults.label,
+      position: { x, y, width, height },
+      config: JSON.parse(JSON.stringify(defaults.defaultConfig)),
+      style: {},
+    };
+    const cmd = new AddWidgetCommand(this._editorState, this._occupancy, widget);
+    this._history.execute(cmd);
+    this._editorState.select(widget.id);
   }
 
-  private _iconText() {
-    return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>`;
+  private _onSelectWidget(e: CustomEvent) {
+    this._editorState.select(e.detail.widgetId);
   }
 
-  private _iconPointer() {
-    return html`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>`;
+  private _onToggleSelect(e: CustomEvent) {
+    this._editorState.toggleSelect(e.detail.widgetId);
+  }
+
+  private _onDeselectAll() {
+    this._editorState.deselectAll();
+  }
+
+  private _onMoveWidgets(e: CustomEvent) {
+    const { moves } = e.detail as {
+      moves: Array<{ widgetId: string; fromX: number; fromY: number; toX: number; toY: number; width: number; height: number }>;
+    };
+
+    if (moves.length === 1) {
+      const m = moves[0];
+      const cmd = new MoveWidgetCommand(
+        this._editorState, this._occupancy,
+        m.widgetId, m.fromX, m.fromY, m.toX, m.toY, m.width, m.height,
+      );
+      this._history.execute(cmd);
+    } else if (moves.length > 1) {
+      const cmds = moves.map(m => new MoveWidgetCommand(
+        this._editorState, this._occupancy,
+        m.widgetId, m.fromX, m.fromY, m.toX, m.toY, m.width, m.height,
+      ));
+      this._history.execute(new CompositeCommand('Move widgets', cmds));
+    }
+  }
+
+  private _onResizeWidget(e: CustomEvent) {
+    const d = e.detail;
+    const cmd = new ResizeWidgetCommand(
+      this._editorState, this._occupancy,
+      d.widgetId, d.fromX, d.fromY, d.fromW, d.fromH, d.toX, d.toY, d.toW, d.toH,
+    );
+    this._history.execute(cmd);
+  }
+
+  private _onDuplicateWidget(e: CustomEvent) {
+    const { widgetId } = e.detail;
+    const widget = this._editorState.getWidget(widgetId);
+    if (!widget) return;
+
+    const pos = this._occupancy.findNearestAvailable(
+      widget.position.width, widget.position.height,
+      widget.position.x + 1, widget.position.y,
+    );
+    if (!pos) return;
+
+    const newWidget: DashboardWidget = {
+      ...JSON.parse(JSON.stringify(widget)),
+      id: this._editorState.generateId(),
+      position: { ...widget.position, x: pos.x, y: pos.y },
+    };
+    const cmd = new DuplicateWidgetCommand(this._editorState, this._occupancy, newWidget);
+    this._history.execute(cmd);
+    this._editorState.select(newWidget.id);
+  }
+
+  private _onDeleteWidget(e: CustomEvent) {
+    const { widgetId } = e.detail;
+    const widget = this._editorState.getWidget(widgetId);
+    if (!widget) return;
+
+    const cmd = new DeleteWidgetCommand(this._editorState, this._occupancy, widget);
+    this._history.execute(cmd);
+  }
+
+  private _onPropertyChange(e: CustomEvent) {
+    const { widgetId, path, value } = e.detail;
+    const widget = this._editorState.getWidget(widgetId);
+    if (!widget) return;
+
+    // Handle position changes via move/resize commands
+    if (path === 'position.x' || path === 'position.y') {
+      const pos = widget.position;
+      const newX = path === 'position.x' ? value : pos.x;
+      const newY = path === 'position.y' ? value : pos.y;
+      if (this._occupancy.isValidPosition(newX, newY, pos.width, pos.height, widgetId)) {
+        const cmd = new MoveWidgetCommand(
+          this._editorState, this._occupancy,
+          widgetId, pos.x, pos.y, newX, newY, pos.width, pos.height,
+        );
+        this._history.execute(cmd);
+      }
+      return;
+    }
+
+    if (path === 'position.width' || path === 'position.height') {
+      const pos = widget.position;
+      const newW = path === 'position.width' ? value : pos.width;
+      const newH = path === 'position.height' ? value : pos.height;
+      if (this._occupancy.isValidPosition(pos.x, pos.y, newW, newH, widgetId)) {
+        const cmd = new ResizeWidgetCommand(
+          this._editorState, this._occupancy,
+          widgetId, pos.x, pos.y, pos.width, pos.height, pos.x, pos.y, newW, newH,
+        );
+        this._history.execute(cmd);
+      }
+      return;
+    }
+
+    // Get old value
+    const parts = path.split('.');
+    let oldValue: any = widget;
+    for (const p of parts) {
+      oldValue = (oldValue as any)?.[p];
+    }
+
+    const cmd = new UpdatePropertyCommand(this._editorState, widgetId, path, oldValue, value);
+    this._history.execute(cmd);
+  }
+
+  private _onUndo() {
+    this._history.undo();
+    this._occupancy.buildFromWidgets(this._editorState.widgets);
+  }
+
+  private _onRedo() {
+    this._history.redo();
+    this._occupancy.buildFromWidgets(this._editorState.widgets);
+  }
+
+  // --- Keyboard shortcuts ---
+
+  private _onKeyDown = (e: KeyboardEvent): void => {
+    // Don't handle if focus is in an input
+    const tag = (e.target as HTMLElement).tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    const isMeta = e.metaKey || e.ctrlKey;
+
+    // Undo: Ctrl/Cmd+Z
+    if (isMeta && !e.shiftKey && e.key === 'z') {
+      e.preventDefault();
+      this._onUndo();
+      return;
+    }
+
+    // Redo: Ctrl/Cmd+Shift+Z
+    if (isMeta && e.shiftKey && e.key === 'z') {
+      e.preventDefault();
+      this._onRedo();
+      return;
+    }
+
+    // Delete: Delete or Backspace
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      e.preventDefault();
+      this._deleteSelected();
+      return;
+    }
+
+    // Escape: deselect
+    if (e.key === 'Escape') {
+      this._editorState.deselectAll();
+      return;
+    }
+
+    // Arrow keys: nudge
+    const arrowMap: Record<string, { dx: number; dy: number }> = {
+      ArrowLeft: { dx: -1, dy: 0 },
+      ArrowRight: { dx: 1, dy: 0 },
+      ArrowUp: { dx: 0, dy: -1 },
+      ArrowDown: { dx: 0, dy: 1 },
+    };
+
+    if (arrowMap[e.key] && this._editorState.selectedIds.size > 0) {
+      e.preventDefault();
+      this._nudgeSelected(arrowMap[e.key].dx, arrowMap[e.key].dy);
+    }
+  };
+
+  private _deleteSelected(): void {
+    const selected = this._editorState.selectedWidgets;
+    if (selected.length === 0) return;
+
+    if (selected.length === 1) {
+      const cmd = new DeleteWidgetCommand(this._editorState, this._occupancy, selected[0]);
+      this._history.execute(cmd);
+    } else {
+      const cmds = selected.map(w => new DeleteWidgetCommand(this._editorState, this._occupancy, w));
+      this._history.execute(new CompositeCommand('Delete widgets', cmds));
+    }
+  }
+
+  private _nudgeSelected(dx: number, dy: number): void {
+    const selected = this._editorState.selectedWidgets;
+    if (selected.length === 0) return;
+
+    // Check all can move
+    const selectedIds = new Set(selected.map(w => w.id));
+    for (const w of selected) {
+      const newX = w.position.x + dx;
+      const newY = w.position.y + dy;
+      if (newX < 0 || newX + w.position.width > 12 || newY < 0) return;
+      const collisions = this._occupancy.checkCollision(newX, newY, w.position.width, w.position.height, w.id);
+      for (const id of collisions) {
+        if (!selectedIds.has(id)) return; // real collision
+      }
+    }
+
+    if (selected.length === 1) {
+      const w = selected[0];
+      const cmd = new MoveWidgetCommand(
+        this._editorState, this._occupancy,
+        w.id, w.position.x, w.position.y,
+        w.position.x + dx, w.position.y + dy,
+        w.position.width, w.position.height,
+      );
+      this._history.execute(cmd);
+    } else {
+      const cmds = selected.map(w => new MoveWidgetCommand(
+        this._editorState, this._occupancy,
+        w.id, w.position.x, w.position.y,
+        w.position.x + dx, w.position.y + dy,
+        w.position.width, w.position.height,
+      ));
+      this._history.execute(new CompositeCommand('Nudge widgets', cmds));
+    }
   }
 
   render() {
+    const selectedWidgets = this._editorState.selectedWidgets;
+
     return html`
-      <editor-toolbar></editor-toolbar>
+      <editor-toolbar
+        .canUndo=${this._history.canUndo}
+        .canRedo=${this._history.canRedo}
+        @undo=${this._onUndo}
+        @redo=${this._onRedo}
+      ></editor-toolbar>
       <div class="main-area">
         <div class="sidebar-left">
-          <div class="sidebar-section">
-            <div class="sidebar-title">Widgets</div>
-            <div class="widget-list">
-              <div class="widget-item">
-                <div class="widget-icon chart">${this._iconBarChart()}</div>
-                Chart
-              </div>
-              <div class="widget-item">
-                <div class="widget-icon table">${this._iconTable()}</div>
-                Table
-              </div>
-              <div class="widget-item">
-                <div class="widget-icon metric">${this._iconHash()}</div>
-                Metric
-              </div>
-              <div class="widget-item">
-                <div class="widget-icon text">${this._iconText()}</div>
-                Text
-              </div>
-            </div>
-          </div>
+          <editor-widget-palette></editor-widget-palette>
         </div>
-        <div class="canvas-area">
-          <editor-canvas></editor-canvas>
+        <div class="canvas-area"
+          @add-widget=${this._onAddWidget}
+          @select-widget=${this._onSelectWidget}
+          @toggle-select=${this._onToggleSelect}
+          @deselect-all=${this._onDeselectAll}
+          @move-widgets=${this._onMoveWidgets}
+          @resize-widget=${this._onResizeWidget}
+          @duplicate-widget=${this._onDuplicateWidget}
+          @delete-widget=${this._onDeleteWidget}
+        >
+          <editor-canvas
+            .widgets=${this._editorState.widgets}
+            .selectedIds=${this._editorState.selectedIds}
+            .occupancy=${this._occupancy}
+          ></editor-canvas>
         </div>
-        <div class="sidebar-right">
-          <div class="sidebar-section">
-            <div class="sidebar-title">Properties</div>
-            <div class="config-empty">
-              <div class="config-empty-icon">${this._iconPointer()}</div>
-              <p>Select a widget on the canvas to edit its properties</p>
-            </div>
-          </div>
+        <div class="sidebar-right"
+          @property-change=${this._onPropertyChange}
+        >
+          <editor-property-panel
+            .widgets=${selectedWidgets}
+            .multiSelect=${selectedWidgets.length > 1}
+          ></editor-property-panel>
         </div>
       </div>
     `;
