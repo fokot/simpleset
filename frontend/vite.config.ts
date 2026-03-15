@@ -1,29 +1,28 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 
+const entryNames = [
+  'hello-component',
+  'dashboard-component',
+  'datasource-manager',
+  'dashboard-editor-component',
+  'main-page',
+];
+
+const entries = Object.fromEntries(
+  entryNames.map(name => [name, resolve(__dirname, `src/${name}.ts`)]),
+);
+
 export default defineConfig({
   root: resolve(__dirname, '../examples'),
 
   plugins: [{
     name: 'serve-frontend-src',
-    configureServer(server) {
-      const entries: Record<string, string> = {
-        'hello-component': resolve(__dirname, 'src/hello-component.js'),
-        'dashboard-component': resolve(__dirname, 'src/dashboard-component.ts'),
-        'datasource-manager': resolve(__dirname, 'src/datasource-manager.ts'),
-        'dashboard-editor-component': resolve(__dirname, 'src/editor/index.ts'),
-        'main-page': resolve(__dirname, 'src/main-page.ts'),
-      };
-      server.middlewares.use((req, _res, next) => {
-        if (req.url?.startsWith('/frontend/dist/')) {
-          const name = req.url.replace('/frontend/dist/', '').replace('.js', '');
-          const srcPath = entries[name];
-          if (srcPath) {
-            req.url = '/@fs/' + srcPath;
-          }
-        }
-        next();
-      });
+    resolveId(id) {
+      if (id.startsWith('/frontend/dist/')) {
+        const name = id.replace('/frontend/dist/', '').replace('.js', '');
+        return resolve(__dirname, `src/${name}.ts`);
+      }
     },
   }],
 
@@ -37,13 +36,7 @@ export default defineConfig({
     outDir: resolve(__dirname, 'dist'),
     emptyOutDir: true,
     lib: {
-      entry: {
-        'hello-component': resolve(__dirname, 'src/hello-component.js'),
-        'dashboard-component': resolve(__dirname, 'src/dashboard-component.ts'),
-        'datasource-manager': resolve(__dirname, 'src/datasource-manager.ts'),
-        'dashboard-editor-component': resolve(__dirname, 'src/editor/index.ts'),
-        'main-page': resolve(__dirname, 'src/main-page.ts'),
-      },
+      entry: entries,
       formats: ['es'],
     },
     sourcemap: true,

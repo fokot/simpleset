@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
+import { customElement, property } from 'lit/decorators.js';
 
+@customElement('hello-component')
 export class HelloComponent extends LitElement {
   static styles = css`
     :host {
@@ -59,14 +61,8 @@ export class HelloComponent extends LitElement {
     }
   `;
 
-  static properties = {
-    clickCount: { type: Number }
-  };
-
-  constructor() {
-    super();
-    this.clickCount = 0;
-  }
+  @property({ type: Number })
+  clickCount = 0;
 
   render() {
     return html`
@@ -87,7 +83,7 @@ export class HelloComponent extends LitElement {
     this.clickCount++;
 
     // Add some fun JavaScript effects
-    const container = this.shadowRoot.querySelector('.container');
+    const container = this.shadowRoot!.querySelector('.container') as HTMLElement;
 
     // Random color change
     const colors = [
@@ -111,5 +107,3 @@ export class HelloComponent extends LitElement {
     console.log(`Hello component clicked ${this.clickCount} times!`);
   }
 }
-
-customElements.define('hello-component', HelloComponent);
